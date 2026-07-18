@@ -1,0 +1,166 @@
+# =====================================================================
+# Pilot configuration: N=32, 250 episodes, 2 training seeds, dev seeds only.
+# For a quick stability check of MADDPG / TD3 / TD3-Matched before the full
+# multi-seed study. Uses development eval seeds (never the locked final test
+# seeds). Not for reporting.
+#   python main.py --config config/pilot.yaml --algos maddpg td3 td3_matched
+# =====================================================================
+
+seed: 2026
+device: "cuda"
+
+env:
+  num_bs_antennas: 4
+  num_users: 4
+  num_users_reflection: 3
+  num_ris_elements: 32
+  star_mode: "ES"
+  star_ris_hardware_model: "ideal_independent_phase_es"
+
+  p_max_dbm: 30.0
+  noise_power_dbm: -90.0
+  qos_rate_min: 0.3
+
+  path_loss_exp_direct: 3.5
+  path_loss_exp_bs_ris: 2.2
+  path_loss_exp_ris_user: 2.5
+  ref_path_loss_db: 30.0
+  ref_distance: 1.0
+
+  direct_block_T: true
+  direct_block_loss_db: 25.0
+  direct_block_R_loss_db: 0.0
+
+  bs_position: [0.0, 0.0, 5.0]
+  ris_position: [50.0, 0.0, 10.0]
+  user_area_reflection: [[35.0, 50.0], [-10.0, 10.0], [1.5, 1.5]]
+  user_area_transmission: [[55.0, 75.0], [-10.0, 10.0], [1.5, 1.5]]
+
+  env_formulation: "dynamic_mdp"
+  channel_rho: 0.95
+  resample_positions_on_reset: true
+  max_steps: 50
+  channel_block_steps: 50
+
+  reward_alpha: 1.5
+  reward_rate_reference: 20.0
+  reward_scale: 0.1
+  reward_clip: 50.0
+
+  qos_lambda_init: 1.0
+  augmented_penalty_weight: 1.0
+  dual_lr: 0.01
+  dual_ema: 0.9
+  dual_lambda_max: 20.0
+  two_stage_dual_freeze_fraction: 0.55
+
+  enable_qos_shaping_bonus: false
+  reward_qos_bonus: 0.5
+
+  phase_switching_cost: 0.1
+  power_switching_cost: 0.05
+  beta_switching_cost: 0.05
+
+  equal_power_mode: false
+  phase_action_mode: "absolute"
+  phase_residual_scale: 0.25
+  analytical_phase_min_direct: 1.0e-9
+
+  obs_include_channel_state: true
+  obs_include_ris_state: true
+  local_obs_for_maddpg: true
+  obs_norm_freeze_after_env_steps: 5000
+
+  epsilon: 1.0e-12
+
+networks:
+  hidden_sizes: [256, 256]
+  activation: "relu"
+  layer_norm: true
+  ortho_init: true
+
+maddpg:
+  num_agents: 3
+  actor_lr: 1.0e-4
+  critic_lr: 5.0e-4
+  gamma: 0.95
+  tau: 0.005
+  batch_size: 256
+  buffer_size: 60000
+  warmup_steps: 2500
+  grad_clip: 1.0
+  noise_sigma_start: 0.4
+  noise_sigma_end: 0.05
+  noise_decay_steps: 9000
+  policy_update_every: 1
+
+ddpg:
+  actor_lr: 1.0e-4
+  critic_lr: 5.0e-4
+  gamma: 0.95
+  tau: 0.005
+  batch_size: 256
+  buffer_size: 60000
+  warmup_steps: 2500
+  grad_clip: 1.0
+  noise_sigma_start: 0.4
+  noise_sigma_end: 0.05
+  noise_decay_steps: 9000
+
+td3:
+  actor_lr: 1.0e-4
+  critic_lr: 5.0e-4
+  gamma: 0.95
+  tau: 0.005
+  batch_size: 256
+  buffer_size: 60000
+  warmup_steps: 2500
+  grad_clip: 1.0
+  noise_sigma_start: 0.4
+  noise_sigma_end: 0.05
+  noise_decay_steps: 9000
+  policy_noise: 0.2
+  noise_clip: 0.5
+  policy_delay: 2
+
+ppo:
+  lr: 3.0e-4
+  gamma: 0.95
+  gae_lambda: 0.95
+  clip_eps: 0.2
+  vf_coef: 0.5
+  ent_coef: 0.005
+  epochs: 10
+  minibatch_size: 64
+  rollout_length: 512
+  grad_clip: 0.5
+  target_kl: 0.03
+
+training:
+  total_episodes: 250
+  eval_every: 50
+  eval_episodes: 5
+  checkpoint_every: 250
+  early_stop_patience: 0
+  log_dir: "logs_pilot"
+  ckpt_dir: "checkpoints_pilot"
+  reward_smoothing_window: 20
+  training_seeds: [1000, 2000]
+  model_select_constraint_tolerance: 0.0
+
+evaluation:
+  num_episodes: 5
+  # All pilot evaluation inputs are development/validation inputs.
+  dev_seeds: [101, 202, 303, 404, 505]
+  validation_seeds: [101, 202]
+  legacy_eval_seeds: [9101, 9202]
+  # Pilot uses dev seeds for the "test" bank -- NOT the locked final test seeds.
+  test_seeds: [303, 404, 505]
+  ao_reference_lambda: [1.0, 1.0, 1.0, 1.0]
+  power_sweep_dbm: [20, 30]
+  n_sweep: [32]
+  k_sweep: [4]
+  ablation_modes: ["learned", "ao_grid", "analytical", "fixed", "random",
+                   "none", "equal_power_learned", "equal_power_fixed"]
+  ao_local_search_max_n: 0
+  ao_scenarios_per_seed: 1

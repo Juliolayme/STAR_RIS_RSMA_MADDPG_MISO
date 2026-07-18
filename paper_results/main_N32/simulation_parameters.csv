@@ -1,0 +1,28 @@
+Parameter,Value
+Formulation,dynamic_mdp
+channel_rho,0.95
+K,4
+K_r,3
+N,32
+M,1
+P_max (dBm),30.0
+Noise (dBm),-90.0
+QoS min (b/s/Hz),0.3
+T-blockage (dB),25.0
+PL exp direct,3.5
+PL exp BS-RIS,2.2
+PL exp RIS-User,2.5
+Reward alpha,1.5
+R_ref,20.0
+augmented_penalty_weight,1.0
+dual_lr,0.01
+dual_ema,0.9
+dual_lambda_max,20.0
+two_stage_dual_freeze_fraction,0.55
+phase/power/beta switching cost,0.1/0.05/0.05
+Episodes per algo,2000
+Warmup steps,5000
+obs_norm_freeze_after_env_steps,5000
+Training seeds,"[1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000]"
+Validation seeds,"[11, 22, 33, 44, 55]"
+Test seeds (locked),"[70001, 70002, 70003, 70004, 70005]"

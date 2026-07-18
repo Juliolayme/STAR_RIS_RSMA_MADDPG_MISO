@@ -1,0 +1,33 @@
+\begin{table}[t]
+\centering
+\small
+\caption{So sánh Luận văn này với các công trình liên quan.}
+\label{tab:related_work}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lccccccc}
+\toprule
+\textbf{Công trình} & \textbf{STAR-RIS} & \textbf{RSMA} & \textbf{DRL} & \textbf{Đa tác tử} & \textbf{QoS} & \textbf{Mốc AO} & \textbf{CSI-cond.} \\
+                    &                   &                &              & \textbf{(MARL)}     &              &              & \textbf{infer.}  \\
+\midrule
+\cite{mao2022rsma}        & --- & $\checkmark$ & ---           & ---           & ---           & ---           & ---           \\
+\cite{liu2021starris}     & $\checkmark$ & --- & ---           & ---           & ---           & ---           & ---           \\
+\cite{hieu2021optimal}    & --- & $\checkmark$ & $\checkmark$ & ---           & ---           & ---           & $\checkmark$ \\
+\cite{hua2023learning}    & --- & $\checkmark$ & $\checkmark$ & ---           & ---           & ---           & $\checkmark$ \\
+\cite{wu2024deep}         & --- & $\checkmark$ & $\checkmark$ & ---           & ---           & ---           & $\checkmark$ \\
+\cite{soleymani2024starris}& $\checkmark$ & $\checkmark$ & --- & ---  & ---           & $\checkmark$ & ---           \\
+\cite{gomes2024performance}& $\checkmark$ & $\checkmark$ & --- & ---  & ---           & ---           & ---           \\
+\cite{amiri2024meta}      & $\checkmark$ & $\checkmark$ & $\checkmark$ & ---           & ---           & ---           & $\checkmark$ \\
+\cite{bao2025heuristic}   & $\checkmark$ & $\checkmark$ & $\checkmark$ & ---           & ---           & ---           & $\checkmark$ \\
+\cite{diamanti2023energy} & --- & $\checkmark$ & $\checkmark$ & ---           & $\checkmark$ & ---           & $\checkmark$ \\
+\cite{huang2024starrisuav}& $\checkmark$ & --- & $\checkmark$ & ---           & ---           & ---           & $\checkmark$ \\
+\cite{dange2026collaborative}& $\checkmark$ & --- & $\checkmark$ & $\checkmark$ & ---           & ---           & $\checkmark$ \\
+\cite{faramarzi2024meta}  & $\checkmark$ & $\checkmark$ & $\checkmark$ & ---           & ---           & ---           & $\checkmark$ \\
+\midrule
+\textbf{Luận văn này}     & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ \\
+\bottomrule
+\end{tabular}
+
+\vspace{0.2em}
+{\footnotesize Ghi chú: $\checkmark$ chỉ ra phương diện được xử lý trong công trình. Cột ``Mốc AO'' biểu thị có sử dụng phương pháp tối ưu xen kẽ (AO/BCD) làm mốc so sánh (không phải cận trên). Cột ``CSI-cond. infer.'' biểu thị khả năng suy luận thời gian thực điều kiện theo CSI tức thời tại thời gian chạy.\par}
+\hfill {\footnotesize\itshape Nguồn: Tác giả tổng hợp (2026)}
+\end{table}

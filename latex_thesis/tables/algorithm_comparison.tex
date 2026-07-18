@@ -1,0 +1,23 @@
+\begin{table}[t]
+\centering
+\small
+\caption{So sánh hiệu năng các thuật toán DRL trên locked test ScenarioBank tại cấu hình chuẩn $N=32$ (pipeline Dynamic-MDP; đơn vị phân tích = trung bình theo hạt giống huấn luyện, khoảng tin cậy Student-t $95\%$ qua $8$ hạt giống). Return theo tập bị lược khỏi so sánh chéo vì vector $\lambda$ tối ưu khác nhau giữa các thuật toán; các cột dưới là chỉ số vật lý. QoS all-users là $\Pr[\min_k R_k \ge R_{\min}]$; QoS/UE là $(1/K)\sum_k \mathbf{1}[R_k \ge R_{\min}]$.}
+\label{tab:algorithm_comparison}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lcccccc}
+\toprule
+\textbf{Thuật toán} & \textbf{Sum-rate} & \textbf{QoS} & \textbf{QoS/UE} & \textbf{$R_c$} & \textbf{$P_c/P_{\max}$} & \textbf{Trễ CPU} \\
+                    & (b/s/Hz)          & (all-users)   &                &                &                         & (ms)               \\
+\midrule
+\textbf{MADDPG} & $\mathbf{4{,}52 \pm 0{,}20}$ & $\mathbf{0{,}61}$ & $0{,}84$ & $2{,}24$ & $0{,}79$ & $0{,}60$ \\
+TD3-Matched     & $4{,}41 \pm 0{,}06$         & $0{,}55$          & $0{,}84$ & $\mathbf{2{,}45}$ & $\mathbf{0{,}84}$ & $0{,}27$ \\
+TD3             & $4{,}39 \pm 0{,}06$         & $0{,}45$          & $0{,}80$ & $2{,}24$ & $0{,}81$ & $\mathbf{0{,}25}$ \\
+DDPG            & $3{,}94 \pm 0{,}36$         & $0{,}40$          & $0{,}75$ & $1{,}76$ & $0{,}68$ & $0{,}25$ \\
+PPO             & $3{,}42 \pm 0{,}18$         & $0{,}39$          & $0{,}77$ & $1{,}49$ & $0{,}59$ & $0{,}49$ \\
+\bottomrule
+\end{tabular}
+
+\vspace{0.2em}
+{\footnotesize Ghi chú: Giá trị in đậm là tốt nhất theo từng cột. MADDPG đạt sum-rate và QoS all-users thô cao nhất, nhưng kiểm định paired ($n=8$) $+$ Holm (Bảng \ref{tab:significance}) cho thấy \emph{không} khác biệt có ý nghĩa so với TD3, TD3-Matched hay DDPG; chỉ vượt PPO có ý nghĩa. $R_c$: tốc độ luồng chung; $P_c/P_{\max}$: tỷ lệ công suất luồng chung. Cột trễ đo trên CPU một luồng, $2000$ lần gọi (Bảng \ref{tab:latency_cpu}); heuristic AO-Grid tốn $13{,}97$ ms/quyết định trên cùng phần cứng.\par}
+\hfill {\footnotesize\itshape Nguồn: Tác giả xây dựng (2026)}
+\end{table}

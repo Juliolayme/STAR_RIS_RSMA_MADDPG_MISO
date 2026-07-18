@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="drawio" version="30.0.2">
+  <diagram name="h2_5_mdp_anh_xa" id="h2_5_mdp">
+    <mxGraphModel dx="1600" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="880" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ============ COT 1: TRANG THAI ============ -->
+        <mxCell id="col_s" value="KHÔNG GIAN TRẠNG THÁI 𝒮 (454 chiều)" style="swimlane;startSize=60;html=1;fillColor=#FFFFFF;strokeColor=#000000;swimlaneFillColor=#FFFFFF;fontFamily=Helvetica;fontSize=16;fontStyle=1;horizontal=1;pointerEvents=0;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="480" height="780" as="geometry" />
+        </mxCell>
+        <mxCell id="s0" value="&lt;b&gt;Agent 0 (BS) — 26 chiều&lt;/b&gt;&lt;br&gt;kênh hiệu dụng, công suất, tỷ lệ tách hiện tại" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="col_s">
+          <mxGeometry x="30" y="100" width="420" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="s1" value="&lt;b&gt;Agent 1 (RIS-R) — 280 chiều&lt;/b&gt;&lt;br&gt;kênh G, h&lt;sub&gt;r&lt;/sub&gt; (vùng R); pha θ&lt;sup&gt;R&lt;/sup&gt; hiện tại" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="col_s">
+          <mxGeometry x="30" y="290" width="420" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="s2" value="&lt;b&gt;Agent 2 (RIS-T) — 148 chiều&lt;/b&gt;&lt;br&gt;kênh G, h&lt;sub&gt;r&lt;/sub&gt; (vùng T); pha θ&lt;sup&gt;T&lt;/sup&gt; hiện tại" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="col_s">
+          <mxGeometry x="30" y="480" width="420" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="s_sum" value="Tổng: 26 + 280 + 148 = 454 chiều" style="text;html=1;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=13;fontStyle=2;" vertex="1" parent="col_s">
+          <mxGeometry x="30" y="670" width="420" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- ============ COT 2: HANH DONG ============ -->
+        <mxCell id="col_a" value="KHÔNG GIAN HÀNH ĐỘNG 𝒜 (105 chiều)" style="swimlane;startSize=60;html=1;fillColor=#FFFFFF;strokeColor=#000000;swimlaneFillColor=#FFFFFF;fontFamily=Helvetica;fontSize=16;fontStyle=1;horizontal=1;pointerEvents=0;" vertex="1" parent="1">
+          <mxGeometry x="560" y="40" width="480" height="780" as="geometry" />
+        </mxCell>
+        <mxCell id="a0" value="&lt;b&gt;Agent 0 (BS) — 9 chiều&lt;/b&gt;&lt;br&gt;công suất P&lt;sub&gt;c&lt;/sub&gt;, P&lt;sub&gt;k&lt;/sub&gt; + tỷ lệ tách c&lt;sub&gt;k&lt;/sub&gt; (softmax)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="col_a">
+          <mxGeometry x="30" y="100" width="420" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="a1" value="&lt;b&gt;Agent 1 (RIS-R) — 64 chiều&lt;/b&gt;&lt;br&gt;Δφ&lt;sup&gt;R&lt;/sup&gt; (32) + β&lt;sup&gt;R&lt;/sup&gt; (32)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="col_a">
+          <mxGeometry x="30" y="290" width="420" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="a2" value="&lt;b&gt;Agent 2 (RIS-T) — 32 chiều&lt;/b&gt;&lt;br&gt;Δφ&lt;sup&gt;T&lt;/sup&gt; (32)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="col_a">
+          <mxGeometry x="30" y="480" width="420" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="a_sum" value="Tổng: 9 + 64 + 32 = 105 chiều" style="text;html=1;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=13;fontStyle=2;" vertex="1" parent="col_a">
+          <mxGeometry x="30" y="640" width="420" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="a_res" value="Ánh xạ residual pha:&lt;br&gt;θ = θ&lt;sub&gt;prior&lt;/sub&gt; + (π/4)·Δφ (±45°)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F2F2F2;strokeColor=#000000;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="col_a">
+          <mxGeometry x="30" y="685" width="420" height="75" as="geometry" />
+        </mxCell>
+
+        <!-- ============ COT 3: PHAN THUONG ============ -->
+        <mxCell id="col_r" value="PHẦN THƯỞNG r&lt;sub&gt;t&lt;/sub&gt; (chia sẻ)" style="swimlane;startSize=60;html=1;fillColor=#FFFFFF;strokeColor=#000000;swimlaneFillColor=#FFFFFF;fontFamily=Helvetica;fontSize=16;fontStyle=1;horizontal=1;pointerEvents=0;" vertex="1" parent="1">
+          <mxGeometry x="1080" y="40" width="480" height="780" as="geometry" />
+        </mxCell>
+        <mxCell id="r_formula" value="r&lt;sub&gt;t&lt;/sub&gt; = 1,5·R̃&lt;sub&gt;sum&lt;/sub&gt; − λ&lt;sub&gt;t&lt;/sub&gt;·Σ&lt;sub&gt;k&lt;/sub&gt; [max(0, R&lt;sub&gt;min&lt;/sub&gt; − R&lt;sub&gt;k&lt;/sub&gt;)]²&lt;br&gt;+ b&lt;sub&gt;pwr&lt;/sub&gt; + b&lt;sub&gt;sat&lt;/sub&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F2F2F2;strokeColor=#000000;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="col_r">
+          <mxGeometry x="30" y="100" width="420" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="r_lambda" value="&lt;b&gt;λ thích nghi&lt;/b&gt;&lt;br&gt;×1,02 nếu QoS &amp;lt; 0,5 · ×0,97 nếu QoS &amp;gt; 0,6&lt;br&gt;λ ∈ [0,3; 13]" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="col_r">
+          <mxGeometry x="30" y="310" width="420" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="r_freeze" value="&lt;b&gt;FREEZE-λ&lt;/b&gt;&lt;br&gt;đóng băng λ từ episode 0,55·E = 1100" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1F4E79;strokeWidth=2;fontColor=#1F4E79;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="col_r">
+          <mxGeometry x="30" y="500" width="420" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="r_note" value="r&lt;sub&gt;t&lt;/sub&gt; chia sẻ cho cả 3 tác tử (cooperative)" style="text;html=1;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=13;fontStyle=2;" vertex="1" parent="col_r">
+          <mxGeometry x="30" y="670" width="420" height="40" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

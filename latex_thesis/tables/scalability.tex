@@ -1,0 +1,24 @@
+\begin{table}[t]
+\centering
+\small
+\caption{Khả năng mở rộng theo số phần tử STAR-RIS $N$: MADDPG vs TD3 ($8$ hạt giống huấn luyện độc lập cho mỗi điểm, khoảng tin cậy Student-t $95\%$ qua các trung bình mức hạt giống; đánh giá trên locked test bank, pipeline Dynamic-MDP). Cột QoS là xác suất tất cả $K$ người dùng đồng thời đạt $R_{\min}$.}
+\label{tab:scalability}
+\setlength{\tabcolsep}{4.5pt}
+\begin{tabular}{ccccccc}
+\toprule
+\textbf{$N$} & \multicolumn{2}{c}{\textbf{Sum-rate (b/s/Hz)}} & \multicolumn{2}{c}{\textbf{QoS (all-users)}} & \textbf{Độ lợi} & \textbf{Khác biệt} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+ & \textbf{MADDPG} & \textbf{TD3} & \textbf{MADDPG} & \textbf{TD3} & \textbf{(b/s/Hz)} & \textbf{có ý nghĩa?} \\
+\midrule
+$16$  & $4{,}19 \pm 0{,}09$ & $4{,}07 \pm 0{,}11$ & $0{,}15$ & $0{,}29$ & $+0{,}12$ & Không \\
+$32$  & $4{,}54 \pm 0{,}19$ & $4{,}41 \pm 0{,}06$ & $0{,}54$ & $0{,}40$ & $+0{,}12$ & Không \\
+$64$  & $4{,}99 \pm 0{,}02$ & $4{,}98 \pm 0{,}04$ & $0{,}93$ & $0{,}94$ & $+0{,}01$ & Không \\
+$96$  & $5{,}22 \pm 0{,}01$ & $5{,}21 \pm 0{,}02$ & $0{,}99$ & $0{,}99$ & $+0{,}02$ & Không \\
+$128$ & $5{,}32 \pm 0{,}01$ & $5{,}32 \pm 0{,}01$ & $1{,}00$ & $1{,}00$ & $-0{,}00$ & Không \\
+\bottomrule
+\end{tabular}
+
+\vspace{0.2em}
+{\footnotesize Ghi chú: ``Độ lợi'' = sum-rate MADDPG $-$ sum-rate TD3. Kiểm định paired t-test trên các trung bình mức hạt giống ($n=8$) với hiệu chỉnh Holm--Bonferroni qua các giá trị $N$: \emph{không} điểm $N$ nào đạt $p_{\text{Holm}} < 0{,}05$ (nhỏ nhất $p_{\text{Holm}}=0{,}53$ tại $N=16$). Do đó MADDPG và TD3 \textbf{tương đương thống kê ở mọi $N$ khảo sát}; ở $N=128$ hai phương pháp gần như trùng khớp. Cả hai đều tăng sum-rate và xác suất QoS all-users theo $N$ (QoS tiến tới $\approx 1$ khi $N=128$).\par}
+\hfill {\footnotesize\itshape Nguồn: Tác giả xây dựng (2026)}
+\end{table}

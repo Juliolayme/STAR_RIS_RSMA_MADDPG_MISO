@@ -1,0 +1,16 @@
+# Versioned, pre-registered ScenarioBank seed split.
+#
+# This file is the sole source of truth for the paper configuration.  The
+# loader verifies its SHA-256 before injecting these lists into config.yaml.
+# Development and validation seeds were selected before final-test generation;
+# final-test seeds are locked and must not be inspected before code/config
+# freeze.  The legacy set was previously used during development and is not a
+# valid final-test set.
+schema_version: 1
+split_id: star_ris_rsma_seed_split_2026-07-16_v1
+selection_policy: preregistered_without_final_test_data
+splits:
+  dev_seeds: [101, 202, 303]
+  validation_seeds: [11, 22, 33, 44, 55]
+  legacy_eval_seeds: [9101, 9202, 9303, 9404, 9505]
+  test_seeds: [70001, 70002, 70003, 70004, 70005]

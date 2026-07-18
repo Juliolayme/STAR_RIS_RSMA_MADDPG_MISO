@@ -1,0 +1,256 @@
+# =====================================================================
+# STAR-RIS Assisted RSMA Networks - DRL Resource Allocation
+# Master configuration file (post-refactor; see MIGRATION.md for renames)
+# =====================================================================
+
+seed: 2026
+device: "auto"   # "cpu" | "cuda" | "auto"
+
+# ------------------ System / Environment ------------------
+env:
+  # Geometry & basic parameters
+  num_bs_antennas: 4            # M BS antennas (MISO; env requires M >= 2)
+  num_users: 4                  # K total users
+  num_users_reflection: 3       # users in R region (must be <= K)
+  num_ris_elements: 32          # N STAR-RIS elements
+  star_mode: "ES"               # Energy Splitting
+  # Documentation label: ideal independent-phase ES STAR-RIS (continuous
+  # phases, independent R/T phases, no insertion loss, perfect CSI).
+  star_ris_hardware_model: "ideal_independent_phase_es"
+
+  # Power / noise (in dB / dBm)
+  p_max_dbm: 30.0               # BS maximum transmit power
+  noise_power_dbm: -90.0
+  qos_rate_min: 0.3             # bits/s/Hz minimum per-user rate (incl. common share)
+
+  # Path-loss (Friis-like log-distance model)
+  path_loss_exp_direct: 3.5
+  path_loss_exp_bs_ris: 2.2
+  path_loss_exp_ris_user: 2.5
+  ref_path_loss_db: 30.0        # PL at d=1 m
+  ref_distance: 1.0
+
+  # Blockage / NLoS for direct link (canonical STAR-RIS deployment scenario:
+  # T-region users are behind an obstacle, served via the transmissive side).
+  direct_block_T: true
+  direct_block_loss_db: 25.0    # extra dB attenuation on top of nominal PL
+  direct_block_R_loss_db: 0.0
+
+  # Geometry (meters). R users between BS and RIS; T users behind the RIS.
+  bs_position: [0.0, 0.0, 5.0]
+  ris_position: [50.0, 0.0, 10.0]
+  user_area_reflection: [[35.0, 50.0], [-10.0, 10.0], [1.5, 1.5]]
+  user_area_transmission: [[55.0, 75.0], [-10.0, 10.0], [1.5, 1.5]]
+
+  # ------------------ Formulation (P0-1 reviewer fix) ------------------
+  # dynamic_mdp (default): each step is one coherence block; small-scale
+  #   fading evolves as h_{t+1} = rho*h_t + sqrt(1-rho^2)*eps (Gauss-Markov).
+  #   Transition order: observe h_t -> act -> reward on h_t -> evolve.
+  # static_block: legacy v14 behaviour (channel frozen for channel_block_steps
+  #   steps) kept ONLY to reproduce pre-refactor results / golden fixture.
+  # contextual_bandit: max_steps=1, fresh scenario per reset; requires
+  #   gamma = 0 in every algorithm section (validated, not silently forced).
+  env_formulation: "dynamic_mdp"
+  channel_rho: 0.95             # Gauss-Markov temporal correlation per block
+  resample_positions_on_reset: true   # new user geometry each episode
+  max_steps: 50                 # coherence blocks per episode (dynamic_mdp)
+  channel_block_steps: 50       # used only by static_block (legacy)
+
+  # ------------------ Reward: penalty/Lagrangian surrogate of P0 ---------
+  # reward = alpha * R_sum / reward_rate_reference
+  #          - sum_k lambda_k * c_k            (c_k = R_min - R_k, signed)
+  #          - 0.5 * augmented_penalty_weight * sum_k max(c_k, 0)^2
+  #          - switching costs
+  # Interpretation: expected-rate constraint E[c_k] <= 0 (E[R_k] >= R_min).
+  # This is a surrogate of the hard-constrained problem P0; it does NOT
+  # guarantee per-step per-user QoS.
+  reward_alpha: 1.5
+  reward_rate_reference: 20.0   # R_ref (replaces the former hardcoded K*5)
+  reward_scale: 0.1
+  reward_clip: 50.0
+
+  # Per-user dual variables lambda_k (projected dual-gradient update in the
+  # training driver; see dual_* keys below).
+  qos_lambda_init: 1.0
+  augmented_penalty_weight: 1.0   # w in the augmented quadratic penalty term
+  dual_lr: 0.01
+  dual_ema: 0.9
+  dual_lambda_max: 20.0
+  # Two-stage heuristic schedule: lambda frozen for the final fraction of
+  # training so the reward is stationary in the tail. This is a heuristic;
+  # no saddle-point/primal-dual convergence is claimed.
+  two_stage_dual_freeze_fraction: 0.55
+
+  # Optional shaping bonus (ablation only; default OFF).
+  enable_qos_shaping_bonus: false
+  reward_qos_bonus: 0.5
+
+  # Reconfiguration switching costs (dimension-normalised, zero at t=0):
+  #   phase:  eta_phi * mean_n(1 - cos(dphi_n))   over all 2N phases
+  #   power:  eta_P * ||d power_weights||_1 / (K+1)
+  #   beta:   eta_beta * mean_n(|d beta_n|)
+  phase_switching_cost: 0.1
+  power_switching_cost: 0.05
+  beta_switching_cost: 0.05
+
+  # Ablation toggle: when true the env overrides BS power action to uniform.
+  equal_power_mode: false
+
+  # Physics-informed phase action mapping (hybrid analytical-RL).
+  # "absolute":  phi_n = pi*(action+1)                          in [0, 2pi]
+  # "residual":  phi_n = analytical_prior + scale*pi*action
+  phase_action_mode: "absolute"
+  phase_residual_scale: 0.25
+  # Analytical prior fallback: below this direct-link amplitude the cascaded
+  # terms are aligned to a zero-phase reference (the phase of a vanishing
+  # h_d is numerically meaningless).
+  analytical_phase_min_direct: 1.0e-9
+
+  # Observation
+  obs_include_channel_state: true   # include raw Re/Im of h_d, G, g_k
+  obs_include_ris_state: true       # include currently applied beta/phases
+                                    # (needed for the Markov property under
+                                    # dynamic_mdp with switching costs)
+  local_obs_for_maddpg: true        # MADDPG actors get factorized local views
+
+  # Observation-normalizer freeze (P1-2): statistics update for this many env
+  # steps, then freeze. Applies to ALL algorithms including PPO.
+  obs_norm_freeze_after_env_steps: 5000
+
+  # Numerics
+  epsilon: 1.0e-12
+
+# ------------------ Networks ------------------
+networks:
+  hidden_sizes: [256, 256]
+  activation: "relu"
+  layer_norm: true
+  ortho_init: true
+
+# ------------------ MADDPG ------------------
+maddpg:
+  num_agents: 3                 # BS power agent, RIS-R agent, RIS-T agent
+  actor_lr: 1.0e-4
+  critic_lr: 5.0e-4
+  gamma: 0.95
+  tau: 0.005
+  batch_size: 256
+  buffer_size: 300000
+  warmup_steps: 5000
+  grad_clip: 1.0
+  noise_sigma_start: 0.4
+  noise_sigma_end: 0.05
+  noise_decay_steps: 45000
+  policy_update_every: 1
+
+# ------------------ DDPG / TD3 / PPO ------------------
+ddpg:
+  actor_lr: 1.0e-4
+  critic_lr: 5.0e-4
+  gamma: 0.95
+  tau: 0.005
+  batch_size: 256
+  buffer_size: 300000
+  warmup_steps: 5000
+  grad_clip: 1.0
+  noise_sigma_start: 0.4
+  noise_sigma_end: 0.05
+  noise_decay_steps: 45000
+
+td3:
+  actor_lr: 1.0e-4
+  critic_lr: 5.0e-4
+  gamma: 0.95
+  tau: 0.005
+  batch_size: 256
+  buffer_size: 300000
+  warmup_steps: 5000
+  grad_clip: 1.0
+  noise_sigma_start: 0.4
+  noise_sigma_end: 0.05
+  noise_decay_steps: 45000
+  policy_noise: 0.2
+  noise_clip: 0.5
+  policy_delay: 2
+
+ppo:
+  lr: 3.0e-4
+  gamma: 0.95
+  gae_lambda: 0.95
+  clip_eps: 0.2
+  vf_coef: 0.5
+  ent_coef: 0.005
+  epochs: 10
+  minibatch_size: 64
+  rollout_length: 512
+  grad_clip: 0.5
+  target_kl: 0.03
+
+# ------------------ Training ------------------
+training:
+  total_episodes: 2000
+  eval_every: 50                # validation-bank evaluation cadence
+  eval_episodes: 10
+  checkpoint_every: 400
+  early_stop_patience: 0        # 0 = disabled
+  log_dir: "logs"
+  ckpt_dir: "checkpoints"
+  reward_smoothing_window: 20
+  training_seeds: [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000]
+  # Best-checkpoint selection (lexicographic, on VALIDATION scenarios only):
+  # feasible iff max_k(R_min - mean R_k) <= tolerance; among feasible pick
+  # highest sum-rate; otherwise min max-violation -> min mean-violation ->
+  # max sum-rate. Test scenarios are never used for selection.
+  # FROZEN ON VALIDATION (2026-07-16): max-min AO was feasible on 10/10
+  # scenarios (2 per validation seed), min max-min rate=1.422 > R_min=0.3,
+  # max QoS violation=0, convergence=9/10. Keep the strict 0.0 threshold; do
+  # not change it after any locked-test result has been seen.
+  model_select_constraint_tolerance: 0.0
+  model_select_constraint_tolerance_frozen_on_validation: true
+
+# ------------------ Evaluation / Ablation ------------------
+evaluation:
+  num_episodes: 10              # scenarios per seed in each ScenarioBank
+  # Sole source of truth for development/validation/legacy/locked-test seeds.
+  # load_config verifies this exact SHA-256 and injects the four lists.  Do not
+  # duplicate or edit seed lists here.
+  seed_split:
+    path: "seed_split.v1.yaml"
+    sha256: "d73ba5aea6d037570f2634cbc87175db259a6e91f0fecee74519eecd1f118854"
+  # Pre-registered without final-test data.  Both AO-Grid and Hybrid AO use
+  # this identical vector; neither may read lambda from a trained DRL run.
+  ao_reference_lambda: [1.0, 1.0, 1.0, 1.0]
+  power_sweep_dbm: [10, 15, 20, 25, 30, 35]
+  n_sweep: [16, 32, 64, 96, 128]   # retrain-per-N scalability study
+  k_sweep: [2, 4, 6, 8]
+  ablation_modes: ["learned", "ao_grid", "analytical", "fixed", "random",
+                   "none", "equal_power_learned", "equal_power_fixed"]
+  # Hybrid AO Local Search reference (SLSQP + projected gradient): run for
+  # N <= 32 only (finite-difference gradients scale with N).
+  ao_local_search_max_n: 32
+  # Stratified subset: select this many scenarios from every locked test seed.
+  ao_scenarios_per_seed: 1
+  # PRE-REGISTERED AO solver hyperparameters (V4 review item 7): freeze these
+  # on validation evidence BEFORE opening the locked test bank; they are part
+  # of solver_config_sha, so any later change is visible in the raw results.
+  ao_solver:
+    n_starts: 3
+    max_outer: 8
+    tol: 1.0e-5
+    pg_steps: 40
+    pg_lr: 0.3
+  # FROZEN ON VALIDATION (10 scenarios, 2/seed): penalty-objective CV=0.120,
+  # mean/p95 solve time=18.48/18.92 s, max QoS violation=0.30. The strict
+  # convergence flag was 0/10 because all best starts reached the fixed budget;
+  # retain/report that flag and treat AO only as a fixed-budget local reference.
+  ao_solver_frozen_on_validation: true
+  # Latency benchmark size (V4 review item 6): integration tests override
+  # these with tiny values; the paper run keeps 2000/50.
+  latency_num_calls: 2000
+  latency_warmup_calls: 50
+  # Steps per (RIS mode x seed) for the phase/|h_eff| diagnostics.
+  diagnostic_steps: 240
+  # PRE-REGISTERED experiment matrix for --final-paper aggregation (V4 review
+  # P0-4): the strict aggregate refuses missing/extra/duplicate pairs.
+  required_algorithms: ["maddpg", "ddpg", "td3", "td3_matched", "ppo"]
+  required_training_seeds: [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000]

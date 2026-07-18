@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="drawio" version="30.0.2">
+  <diagram name="h3_algorithm_flowchart">
+    <mxGraphModel dx="1100" dy="1700" grid="1" gridSize="10" page="0" background="#FFFFFF">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- 1. START -->
+        <mxCell id="n1" value="BẮT ĐẦU" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Helvetica;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="440" y="40" width="160" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- 2. Init -->
+        <mxCell id="n2" value="Khởi tạo Actor μ&lt;sub&gt;i&lt;/sub&gt;, Critic Q&lt;sub&gt;i&lt;/sub&gt;, mạng target,&#xa;buffer 𝒟; λ ← 1,0" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="300" y="130" width="440" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- 3. Warmup -->
+        <mxCell id="n3" value="Warmup: 5 000 bước hành động ngẫu nhiên → 𝒟" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="300" y="230" width="440" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- 4. episode loop diamond -->
+        <mxCell id="n4" value="Vòng episode&#xa;e = 1 … E  (E = 2000)" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="360" y="320" width="320" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- 15. END (right of e-diamond) -->
+        <mxCell id="n15" value="KẾT THÚC&#xa;Trả về μ&lt;sub&gt;θ0&lt;/sub&gt;, μ&lt;sub&gt;θ1&lt;/sub&gt;, μ&lt;sub&gt;θ2&lt;/sub&gt;" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Helvetica;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="780" y="335" width="240" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- 5. sample channel -->
+        <mxCell id="n5" value="Lấy mẫu kênh mới h&lt;sub&gt;d,k&lt;/sub&gt;, G, h&lt;sub&gt;r,k&lt;/sub&gt;; reset trạng thái" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="300" y="470" width="440" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- 6. step loop diamond -->
+        <mxCell id="n6" value="Vòng bước&#xa;t = 1 … T  (T = 50)" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="360" y="560" width="320" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- 7. prior phase -->
+        <mxCell id="n7" value="Tính pha tiên nghiệm θ&lt;sub&gt;prior&lt;/sub&gt; từ kênh" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="300" y="710" width="440" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- 8. action (NN, gray) -->
+        <mxCell id="n8" value="Sinh hành động a&lt;sub&gt;i&lt;/sub&gt; = μ&lt;sub&gt;i&lt;/sub&gt;(o&lt;sub&gt;i&lt;/sub&gt;) + noise OU&#xa;Ánh xạ vật lý: θ = θ&lt;sub&gt;prior&lt;/sub&gt; + (π/4)·Δφ; softmax công suất" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F2F2F2;strokeColor=#000000;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="280" y="800" width="480" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- 9. execute -->
+        <mxCell id="n9" value="Thực thi: tính h&lt;sub&gt;eff&lt;/sub&gt;, SINR, R&lt;sub&gt;k&lt;/sub&gt;, R&lt;sub&gt;sum&lt;/sub&gt; → phần thưởng r&lt;sub&gt;t&lt;/sub&gt;&#xa;Lưu (o, a, r, o′) vào 𝒟" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="300" y="910" width="440" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- 10. update (NN, gray) -->
+        <mxCell id="n10" value="Nếu |𝒟| &gt; B: lấy mini-batch → cập nhật Critic (Bellman)&#xa;→ Actor (DPG) → soft-update target (τ = 0,005)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F2F2F2;strokeColor=#000000;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="280" y="1020" width="480" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- 12. rho_QoS -->
+        <mxCell id="n12" value="Tính ρ&lt;sub&gt;QoS&lt;/sub&gt; của episode" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="300" y="1140" width="440" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- 13. freeze decision (accent) -->
+        <mxCell id="n13" value="e &amp;lt; 0,55·E ?&#xa;(0,55·E = 1100)" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1F4E79;strokeWidth=2;fontFamily=Helvetica;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="360" y="1230" width="320" height="110" as="geometry" />
+        </mxCell>
+
+        <!-- 13a. update lambda -->
+        <mxCell id="n13a" value="Cập nhật λ thích nghi:&#xa;×1,02 nếu ρ&lt;sub&gt;QoS&lt;/sub&gt; &amp;lt; 0,5 · ×0,97 nếu ρ&lt;sub&gt;QoS&lt;/sub&gt; &amp;gt; 0,6&#xa;kẹp [0,3; 13]" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="40" y="1385" width="330" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- 13b. freeze lambda -->
+        <mxCell id="n13b" value="ĐÓNG BĂNG λ&#xa;(giữ nguyên giá trị)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1F4E79;strokeWidth=2;fontFamily=Helvetica;fontSize=13;fontStyle=1;fontColor=#1F4E79;" vertex="1" parent="1">
+          <mxGeometry x="680" y="1390" width="300" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- 14. noise decay -->
+        <mxCell id="n14" value="Giảm σ noise (tuyến tính, sàn tại ep ≈ 900)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="300" y="1510" width="440" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- annotations for freeze branches -->
+        <mxCell id="a1" value="pha thích nghi" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Helvetica;fontSize=12;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="225" y="1335" width="120" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="a2" value="pha đóng băng" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Helvetica;fontSize=12;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="840" y="1335" width="130" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- ============ EDGES ============ -->
+        <!-- 1 -> 2 -->
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;endArrow=classic;endSize=6;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="n1" target="n2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- 2 -> 3 -->
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;endArrow=classic;endSize=6;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="n2" target="n3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- 3 -> 4 -->
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;endArrow=classic;endSize=6;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="n3" target="n4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- 4 -> 5 (e <= E) -->
+        <mxCell id="e4" value="e ≤ E" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;endArrow=classic;endSize=6;exitX=0.5;exitY=1;entryX=0.5;entryY=0;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="n4" target="n5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- 4 -> END (e > E) -->
+        <mxCell id="e15" value="e &amp;gt; E" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;endArrow=classic;endSize=6;exitX=1;exitY=0.5;entryX=0;entryY=0.5;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="n4" target="n15">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- 5 -> 6 -->
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;endArrow=classic;endSize=6;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="n5" target="n6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- 6 -> 7 (t <= T) -->
+        <mxCell id="e6" value="t ≤ T" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;endArrow=classic;endSize=6;exitX=0.5;exitY=1;entryX=0.5;entryY=0;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="n6" target="n7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- 7 -> 8 -->
+        <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;endArrow=classic;endSize=6;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="n7" target="n8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- 8 -> 9 -->
+        <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;endArrow=classic;endSize=6;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="n8" target="n9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- 9 -> 10 -->
+        <mxCell id="e9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;endArrow=classic;endSize=6;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="n9" target="n10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- t-loop: 10 -> 6 (right corridor) -->
+        <mxCell id="e10" value="t ← t + 1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;endArrow=classic;endSize=6;exitX=1;exitY=0.5;entryX=1;entryY=0.5;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="n10" target="n6">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="880" y="1055" />
+              <mxPoint x="880" y="610" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <!-- 6 -> 12 (het T, left corridor) -->
+        <mxCell id="e11" value="hết T bước" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;endArrow=classic;endSize=6;exitX=0;exitY=0.5;entryX=0;entryY=0.5;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="n6" target="n12">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="220" y="610" />
+              <mxPoint x="220" y="1165" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <!-- 12 -> 13 -->
+        <mxCell id="e12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;endArrow=classic;endSize=6;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="n12" target="n13">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- 13 -> 13a (Có) -->
+        <mxCell id="e13a" value="Có" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;endArrow=classic;endSize=6;exitX=0;exitY=0.5;entryX=0.5;entryY=0;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="n13" target="n13a">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="215" y="1285" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <!-- 13 -> 13b (Không) -->
+        <mxCell id="e13b" value="Không" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;endArrow=classic;endSize=6;exitX=1;exitY=0.5;entryX=0.5;entryY=0;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="n13" target="n13b">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="830" y="1285" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <!-- 13a -> 14 -->
+        <mxCell id="e14a" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;endArrow=classic;endSize=6;exitX=0.5;exitY=1;entryX=0;entryY=0.5;" edge="1" parent="1" source="n13a" target="n14">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="215" y="1535" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <!-- 13b -> 14 -->
+        <mxCell id="e14b" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;endArrow=classic;endSize=6;exitX=0.5;exitY=1;entryX=1;entryY=0.5;" edge="1" parent="1" source="n13b" target="n14">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="830" y="1535" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <!-- e-loop: 14 -> 4 (far left corridor) -->
+        <mxCell id="e16" value="e ← e + 1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;endArrow=classic;endSize=6;exitX=0.5;exitY=1;entryX=0;entryY=0.5;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="n14" target="n4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="520" y="1600" />
+              <mxPoint x="30" y="1600" />
+              <mxPoint x="30" y="370" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

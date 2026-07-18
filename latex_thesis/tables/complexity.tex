@@ -1,0 +1,23 @@
+\begin{table}[t]
+\centering
+\small
+\caption{So sánh độ phức tạp tính toán giữa các thuật toán.}
+\label{tab:complexity}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Phương pháp} & \textbf{Độ phức tạp huấn luyện} & \textbf{Độ phức tạp suy luận} & \textbf{Phù hợp} & \textbf{Khả năng} \\
+                     & \textbf{(mỗi vòng lặp)}           & \textbf{(mỗi quyết định)}      & \textbf{thời gian thực} & \textbf{mở rộng} \\
+\midrule
+AO-Grid / AO local search           & ---                                  & $\mathcal{O}(I\, N^3)$            & Không  & Trung bình \\
+DDPG \cite{lillicrap2016continuous} & $\mathcal{O}(B\, D)$                & $\mathcal{O}(D)$                  & Có    & Trung bình \\
+TD3 \cite{fujimoto2018addressing}   & $\mathcal{O}(2B\, D)$               & $\mathcal{O}(D)$                  & Có    & Trung bình \\
+PPO \cite{schulman2017proximal}     & $\mathcal{O}(B\, D \cdot E_p)$      & $\mathcal{O}(D)$                  & Có    & Trung bình \\
+\textbf{MADDPG (đề xuất)}           & $\mathcal{O}\big(B\,\sum_i D_i + B\, D_Q\big)$ & $\mathcal{O}\!\left(\sum_i D_i\right)$ & Có & Trung bình \\
+\bottomrule
+\end{tabular}
+
+\vspace{0.2em}
+{\footnotesize Ghi chú: $I$ là số vòng lặp tối ưu xen kẽ (AO) trên mỗi channel realization (thường $50$--$100$); $N$ là số phần tử STAR-RIS; $B$ là kích thước mini-batch; $D$ là tổng số tham số mạng nơ-ron; $D_i$ là số tham số Actor của tác tử thứ $i$; $D_Q$ là số tham số Critic tập trung; $E_p$ là số PPO epoch trên mỗi batch. Cột ``Khả năng mở rộng'' đánh giá khả năng mở rộng cấu trúc theo $N$ và $K$: mọi thuật toán DRL với mạng có kích thước cố định đều phải huấn luyện lại khi $N,K$ đổi. Về mặt lý thuyết, cấu trúc phân rã của MADDPG được kỳ vọng chịu ảnh hưởng nhẹ hơn theo quy mô hành động; tuy nhiên thực nghiệm quét $N$ (Bảng \ref{tab:scalability}) cho thấy MADDPG và tác tử đơn TD3 mở rộng \emph{tương đương} tới $N=128$, nên lợi thế lý thuyết này không được kiểm chứng trong dải khảo sát. Về tham số, MADDPG có $\approx 1{,}07$ triệu tham số, và baseline TD3-Matched được thiết kế khớp tổng tham số này (chênh $<0{,}2\%$) để so sánh công bằng.\par}
+\hfill {\footnotesize\itshape Nguồn: Tác giả tổng hợp (2026)}
+\end{table}

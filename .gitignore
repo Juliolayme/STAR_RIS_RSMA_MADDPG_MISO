@@ -1,0 +1,35 @@
+.DS_Store
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.pytest_cache/
+
+# Generated run artifacts -- must NOT ship in the release ZIP (item 14).
+# Every pipeline run writes into a config-hash/timestamp subdirectory; results,
+# logs and (large) resumable checkpoints are reproducible from source + config.
+results_revised/
+logs/
+logs_smoke/
+logs_pilot/
+checkpoints/
+checkpoints_smoke/
+checkpoints_pilot/
+pilot_out.txt
+pilot_time.txt
+feasibility_validation.csv
+ao_solver_validation.csv
+*.replay.npz
+# Scenario-bank materialisations are regenerated deterministically from config.
+config/scenario_bank.json
+config/scenario_bank.npz
+# LaTeX build artifacts
+*.aux
+*.blg
+*.bbl
+*.log
+*.toc
+*.lof
+*.lot
+*.out
+*.xdv
+latex_thesis/main.pdf

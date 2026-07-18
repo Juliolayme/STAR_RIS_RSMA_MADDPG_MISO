@@ -1,0 +1,216 @@
+{
+  "source": "pre-refactor v14 implementation (env/star_ris_env.py)",
+  "generated": "2026-07-15",
+  "python": "3.10.11 (tags/v3.10.11:7d4cc5a, Apr  5 2023, 00:38:17) [MSC v.1929 64 bit (AMD64)]",
+  "numpy": "2.2.6",
+  "platform": "Windows-10-10.0.26100-SP0",
+  "cases": [
+    {
+      "name": "case_block_full",
+      "config": {
+        "num_bs_antennas": 1,
+        "num_users": 4,
+        "num_users_reflection": 3,
+        "num_ris_elements": 8,
+        "star_mode": "ES",
+        "p_max_dbm": 30.0,
+        "noise_power_dbm": -90.0,
+        "qos_rate_min": 0.3,
+        "path_loss_exp_direct": 3.5,
+        "path_loss_exp_bs_ris": 2.2,
+        "path_loss_exp_ris_user": 2.5,
+        "ref_path_loss_db": 30.0,
+        "ref_distance": 1.0,
+        "direct_block_T": true,
+        "direct_block_loss_db": 25.0,
+        "direct_block_R_loss_db": 0.0,
+        "bs_position": [
+          0.0,
+          0.0,
+          5.0
+        ],
+        "ris_position": [
+          50.0,
+          0.0,
+          10.0
+        ],
+        "user_area_reflection": [
+          [
+            35.0,
+            50.0
+          ],
+          [
+            -10.0,
+            10.0
+          ],
+          [
+            1.5,
+            1.5
+          ]
+        ],
+        "user_area_transmission": [
+          [
+            55.0,
+            75.0
+          ],
+          [
+            -10.0,
+            10.0
+          ],
+          [
+            1.5,
+            1.5
+          ]
+        ],
+        "max_steps": 10,
+        "channel_block_steps": 10,
+        "phase_action_mode": "absolute",
+        "equal_power_mode": false,
+        "obs_include_channel_state": true,
+        "local_obs_for_maddpg": true,
+        "epsilon": 1e-12
+      },
+      "env_seed": 123,
+      "reset_seed": 456,
+      "action_seed": 789
+    },
+    {
+      "name": "case_block_3",
+      "config": {
+        "num_bs_antennas": 1,
+        "num_users": 4,
+        "num_users_reflection": 3,
+        "num_ris_elements": 16,
+        "star_mode": "ES",
+        "p_max_dbm": 30.0,
+        "noise_power_dbm": -90.0,
+        "qos_rate_min": 0.3,
+        "path_loss_exp_direct": 3.5,
+        "path_loss_exp_bs_ris": 2.2,
+        "path_loss_exp_ris_user": 2.5,
+        "ref_path_loss_db": 30.0,
+        "ref_distance": 1.0,
+        "direct_block_T": true,
+        "direct_block_loss_db": 25.0,
+        "direct_block_R_loss_db": 0.0,
+        "bs_position": [
+          0.0,
+          0.0,
+          5.0
+        ],
+        "ris_position": [
+          50.0,
+          0.0,
+          10.0
+        ],
+        "user_area_reflection": [
+          [
+            35.0,
+            50.0
+          ],
+          [
+            -10.0,
+            10.0
+          ],
+          [
+            1.5,
+            1.5
+          ]
+        ],
+        "user_area_transmission": [
+          [
+            55.0,
+            75.0
+          ],
+          [
+            -10.0,
+            10.0
+          ],
+          [
+            1.5,
+            1.5
+          ]
+        ],
+        "max_steps": 9,
+        "channel_block_steps": 3,
+        "phase_action_mode": "absolute",
+        "equal_power_mode": false,
+        "obs_include_channel_state": true,
+        "local_obs_for_maddpg": true,
+        "epsilon": 1e-12
+      },
+      "env_seed": 321,
+      "reset_seed": 654,
+      "action_seed": 987
+    },
+    {
+      "name": "case_k2",
+      "config": {
+        "num_bs_antennas": 1,
+        "num_users": 2,
+        "num_users_reflection": 1,
+        "num_ris_elements": 8,
+        "star_mode": "ES",
+        "p_max_dbm": 30.0,
+        "noise_power_dbm": -90.0,
+        "qos_rate_min": 0.3,
+        "path_loss_exp_direct": 3.5,
+        "path_loss_exp_bs_ris": 2.2,
+        "path_loss_exp_ris_user": 2.5,
+        "ref_path_loss_db": 30.0,
+        "ref_distance": 1.0,
+        "direct_block_T": true,
+        "direct_block_loss_db": 25.0,
+        "direct_block_R_loss_db": 0.0,
+        "bs_position": [
+          0.0,
+          0.0,
+          5.0
+        ],
+        "ris_position": [
+          50.0,
+          0.0,
+          10.0
+        ],
+        "user_area_reflection": [
+          [
+            35.0,
+            50.0
+          ],
+          [
+            -10.0,
+            10.0
+          ],
+          [
+            1.5,
+            1.5
+          ]
+        ],
+        "user_area_transmission": [
+          [
+            55.0,
+            75.0
+          ],
+          [
+            -10.0,
+            10.0
+          ],
+          [
+            1.5,
+            1.5
+          ]
+        ],
+        "max_steps": 6,
+        "channel_block_steps": 6,
+        "phase_action_mode": "absolute",
+        "equal_power_mode": false,
+        "obs_include_channel_state": true,
+        "local_obs_for_maddpg": true,
+        "epsilon": 1e-12
+      },
+      "env_seed": 111,
+      "reset_seed": 222,
+      "action_seed": 333
+    }
+  ]
+}

@@ -1,0 +1,89 @@
+% =============================================================================
+%  LUẬN VĂN THẠC SĨ
+%  Đề tài: Tối ưu phân bổ tài nguyên sử dụng Học tăng cường sâu
+%          trong mạng STAR-RIS hỗ trợ RSMA
+%  Tác giả: Nguyễn Duy Thanh
+%  Trường: Đại học Giao thông vận tải TP. Hồ Chí Minh (UTH)
+%  Compiler: XeLaTeX  +  BibTeX (IEEEtran.bst)
+% =============================================================================
+\documentclass{uth-thesis}
+
+% --- Thông tin luận văn -----------------------------------------------------
+\thesisuniversity{Trường Đại học Giao thông vận tải TP. Hồ Chí Minh}
+\thesisfaculty{Viện Đào tạo Sau đại học}
+\thesisauthor{Nguyễn Duy Thanh}
+\thesistitle{Tối ưu phân bổ tài nguyên sử dụng học tăng cường sâu trong mạng STAR-RIS hỗ trợ RSMA}
+\thesisadvisor{1. TS. Trần Thiên Thanh \\ 2. TS. Ngô Hoàng Tú}
+\thesismajor{Khoa học máy tính}
+\thesissubmajor{Khoa học máy tính}
+\thesismajorcode{2480101831}
+\thesisyear{2026}
+\thesiscity{TP. Hồ Chí Minh}
+
+% =============================================================================
+%  TỐI ƯU COMPILE (TUỲ CHỌN)
+% =============================================================================
+% Khi sửa nội dung và muốn compile NHANH (< 10s), bỏ comment 1 trong các dòng:
+% \includeonly{chapters/04_chuong_3}     % chỉ compile Ch3
+% \includeonly{chapters/05_chuong_4}     % chỉ compile Ch4
+% \includeonly{chapters/02_chuong_1,chapters/03_chuong_2}  % chỉ Ch1+Ch2
+%
+% Khi build BẢN ĐẦY ĐỦ để nộp: comment lại các dòng \includeonly ở trên (như hiện tại).
+% =============================================================================
+
+\begin{document}
+
+% =============================================================================
+%  PHẦN TRƯỚC (đánh số La Mã cho front matter)
+% =============================================================================
+\pagenumbering{roman}
+\setcounter{page}{1}
+
+% 1. Trang bìa chính
+\makecoverpage
+
+% 2. Trang bìa phụ
+\makeinnercoverpage
+
+% 3. Lời cam đoan, lời cảm ơn, tóm tắt, mục lục, danh mục
+\input{chapters/00_front_matter}
+
+% =============================================================================
+%  NỘI DUNG CHÍNH (đánh số Ả-rập từ Mở đầu)
+% =============================================================================
+\clearpage
+\pagenumbering{arabic}
+\setcounter{page}{1}
+\pagestyle{fancy}
+
+% Mở đầu
+\include{chapters/01_mo_dau}
+
+% Chương 1
+\include{chapters/02_chuong_1}
+
+% Chương 2
+\include{chapters/03_chuong_2}
+
+% Chương 3
+\include{chapters/04_chuong_3}
+
+% Chương 4
+\include{chapters/05_chuong_4}
+
+% Kết luận
+\include{chapters/06_ket_luan}
+
+% =============================================================================
+%  TÀI LIỆU THAM KHẢO (IEEE style)
+% =============================================================================
+\clearpage
+\phantomsection
+\addcontentsline{toc}{chapter}{TÀI LIỆU THAM KHẢO}
+
+\bibliographystyle{IEEEtran}
+{\renewcommand{\chaptername}{}
+ \renewcommand{\bibname}{TÀI LIỆU THAM KHẢO}
+ \bibliography{references}}
+
+\end{document}

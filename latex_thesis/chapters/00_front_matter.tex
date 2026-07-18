@@ -1,0 +1,224 @@
+% =============================================================================
+%  Front matter: Lời cam đoan, Lời cảm ơn, Tóm tắt, Mục lục, Danh mục
+% =============================================================================
+
+% --------- LỜI CAM ĐOAN -----------------------------------------------------
+\clearpage
+\thispagestyle{empty}
+\begin{center}
+{\fontsize{14}{17}\bfseries\MakeUppercase Lời cam đoan\par}
+\end{center}
+\vspace{1cm}
+
+\hspace{1.27cm}Tôi xin cam đoan đây là công trình nghiên cứu của riêng tôi. Các
+số liệu, kết quả thực nghiệm và kết luận nêu trong Luận văn là trung thực và
+chưa từng được công bố trong bất kỳ công trình nào khác. Toàn bộ mã nguồn,
+dữ liệu huấn luyện, các hình ảnh và bảng biểu trình bày trong Luận văn đều
+do tôi tự xây dựng, ngoại trừ những phần đã trích dẫn nguồn rõ ràng trong
+mục Tài liệu tham khảo theo chuẩn IEEE.
+
+\vspace{0.5cm}
+\hspace{1.27cm}Tôi xin chịu trách nhiệm về đề tài nghiên cứu của mình.
+
+\vspace{2cm}
+\begin{flushright}
+\begin{minipage}{0.45\textwidth}
+\centering
+TP. Hồ Chí Minh, ngày \ldots\ tháng \ldots\ năm 2026\\[0.3cm]
+Tác giả Luận văn\\[2.5cm]
+\textbf{Nguyễn Duy Thanh}
+\end{minipage}
+\end{flushright}
+
+% --------- LỜI CẢM ƠN -------------------------------------------------------
+\clearpage
+\thispagestyle{empty}
+\begin{center}
+{\fontsize{14}{17}\bfseries\MakeUppercase Lời cảm ơn\par}
+\end{center}
+\vspace{1cm}
+
+\hspace{1.27cm}Để hoàn thành Luận văn Thạc sĩ này, tôi đã nhận được sự giúp đỡ
+và hỗ trợ quý báu từ nhiều cá nhân và tổ chức. Tôi xin được bày tỏ lòng biết ơn
+sâu sắc đến:
+
+\vspace{0.3cm}
+\hspace{1.27cm}\textbf{TS. Trần Thiên Thanh} và \textbf{TS. Ngô Hoàng Tú},
+hai người hướng dẫn khoa học, đã tận tình chỉ bảo, định hướng nghiên cứu
+và động viên tôi trong suốt quá trình thực hiện đề tài. Những góp ý quý
+báu của hai Thầy về cả mặt lý thuyết và triển khai mô phỏng đã giúp Luận
+văn có được kết quả như hiện tại.
+
+\vspace{0.3cm}
+\hspace{1.27cm}\textbf{Quý Thầy, Cô Viện Đào tạo Sau đại học và Khoa Công
+nghệ Thông tin, Trường Đại học Giao thông vận tải TP. Hồ Chí Minh} đã
+trang bị cho tôi nền tảng kiến thức vững chắc về khoa học máy tính, trí
+tuệ nhân tạo và xử lý dữ liệu, là cơ sở thiết yếu để thực hiện công trình
+này.
+
+\vspace{0.3cm}
+\hspace{1.27cm}\textbf{Cộng đồng nghiên cứu mã nguồn mở} (PyTorch, NumPy,
+Matplotlib, draw.io) đã cung cấp các công cụ giúp việc cài đặt, huấn luyện
+và trực quan hóa kết quả thực nghiệm trở nên thuận tiện và đáng tin cậy.
+
+\vspace{0.3cm}
+\hspace{1.27cm}\textbf{Gia đình và bạn bè} đã luôn ở bên động viên, chia sẻ và
+hỗ trợ tôi cả về vật chất lẫn tinh thần trong suốt thời gian học tập và
+nghiên cứu.
+
+\vspace{0.5cm}
+\hspace{1.27cm}Mặc dù đã có nhiều cố gắng, song do giới hạn về thời gian và
+kinh nghiệm, Luận văn không tránh khỏi những thiếu sót. Tôi rất mong nhận
+được ý kiến đóng góp của quý Thầy/Cô và bạn đọc để Luận văn được hoàn thiện
+hơn.
+
+\vspace{0.5cm}
+\hspace{1.27cm}Xin trân trọng cảm ơn!
+
+\vspace{1.5cm}
+\begin{flushright}
+\begin{minipage}{0.45\textwidth}
+\centering
+TP. Hồ Chí Minh, ngày \ldots\ tháng \ldots\ năm 2026\\[0.3cm]
+Tác giả Luận văn\\[2.5cm]
+\textbf{Nguyễn Duy Thanh}
+\end{minipage}
+\end{flushright}
+
+% --------- MỤC LỤC ----------------------------------------------------------
+\clearpage
+\thispagestyle{empty}
+\renewcommand{\contentsname}{\hfill MỤC LỤC \hfill}
+\tableofcontents
+
+% --------- DANH MỤC TỪ VIẾT TẮT ---------------------------------------------
+\clearpage
+\thispagestyle{empty}
+\begin{center}
+{\fontsize{14}{17}\bfseries\MakeUppercase Danh mục các ký hiệu, các chữ viết tắt\par}
+\end{center}
+\vspace{0.4cm}
+
+\noindent\textbf{1. Các ký hiệu toán học}\par
+\vspace{0.2cm}
+
+\renewcommand{\arraystretch}{1.2}
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{p{3.5cm} p{11cm}}
+\toprule
+\textbf{Ký hiệu} & \textbf{Ý nghĩa} \\
+\midrule
+\endhead
+$N$ & Số phần tử của STAR-RIS \\
+$K$ & Tổng số người dùng (UE) trong hệ thống \\
+$K_R, K_T$ & Số UE trong vùng phản xạ R và vùng truyền qua T \\
+$M$ & Số anten của trạm gốc (BS) \\
+$h_{d,k}$ & Kênh truyền trực tiếp từ BS đến UE thứ $k$ \\
+$\mathbf{G}$ & Vector kênh truyền từ BS đến STAR-RIS, $\mathbf{G} \in \mathbb{C}^{N \times 1}$ \\
+$\mathbf{h}_{r,k}^X$ & Vector kênh từ STAR-RIS đến UE thứ $k$, vùng $X \in \{R, T\}$ \\
+$h_{eff,k}$ & Kênh hiệu dụng SISO tương đương BS--UE thứ $k$ \\
+$\Phi_n^X$ & Hệ số phản xạ/truyền qua của phần tử thứ $n$, $X \in \{R, T\}$ \\
+$\boldsymbol{\Phi}_X$ & Ma trận pha dịch STAR-RIS vùng $X$, dạng đường chéo \\
+$\beta_n^R, \beta_n^T$ & Hệ số phân chia năng lượng phản xạ/truyền qua, $\in [0,1]$ \\
+$\theta_n^R, \theta_n^T$ & Pha phản xạ/truyền qua của phần tử thứ $n$, $\in [0, 2\pi)$ \\
+$\sqrt{\beta_n^X}$ & Biên độ phức của hệ số STAR-RIS \\
+$x$ & Tín hiệu phát hợp nhất tại BS \\
+$y_k$ & Tín hiệu thu tại UE thứ $k$ \\
+$s_c, s_k$ & Luồng chung và luồng riêng (mã hóa) của UE thứ $k$ \\
+$W_k, W_k^c, W_k^p$ & Thông điệp gốc, phần chung, phần riêng của UE thứ $k$ \\
+$P_c, P_k$ & Công suất phát dành cho luồng chung và luồng riêng UE thứ $k$ \\
+$P_{\max}$ & Công suất phát tối đa của BS \\
+$c_k$ & Tỷ lệ phân chia luồng chung cho UE thứ $k$, $\sum_k c_k = 1$ \\
+$\sigma^2$ & Công suất tạp âm Gauss phức tại UE \\
+$\gamma_{c,k}, \gamma_{p,k}$ & SINR luồng chung và luồng riêng tại UE thứ $k$ \\
+$R_{c,k}, R_{p,k}$ & Tốc độ luồng chung khả thi và luồng riêng tại UE thứ $k$ \\
+$R_c$ & Tốc độ luồng chung của toàn hệ thống, $R_c = \min_k R_{c,k}$ \\
+$R_k$ & Tổng tốc độ của UE thứ $k$, $R_k = c_k R_c + R_{p,k}$ \\
+$R_{sum}$ & Tổng tốc độ toàn hệ thống, $R_{sum} = \sum_k R_k$ \\
+$R_{\min}$ & Yêu cầu QoS tối thiểu cho từng UE \\
+$\alpha_d, \alpha_G, \alpha_r$ & Số mũ suy hao đường truyền cho từng loại kênh \\
+$d_0, \mathrm{PL}_0$ & Khoảng cách tham chiếu và suy hao tham chiếu \\
+$\mathcal{S}, \mathcal{A}, \mathcal{R}$ & Không gian trạng thái, hành động, phần thưởng (MDP) \\
+$s_t, a_t, r_t$ & Trạng thái, hành động, phần thưởng tại bước thời gian $t$ \\
+$o_i, a_i$ & Quan sát cục bộ và hành động của tác tử thứ $i$ \\
+$\mu_i, Q_i$ & Mạng Actor và Critic của tác tử thứ $i$ \\
+$\theta_{\mu_i}, \phi_i$ & Tham số trọng số mạng Actor và Critic \\
+$\gamma$ & Hệ số chiết khấu của MDP, $\gamma \in [0,1)$ \\
+$\tau$ & Hệ số cập nhật mềm cho mạng mục tiêu \\
+$\lambda_t$ & Hệ số phạt Lagrangian thích nghi tại bước $t$ \\
+$\Delta\phi_n^X$ & Phần dư pha (residual) đầu ra của tác tử pha \\
+$\mathcal{N}_t^{\text{OU}}$ & Nhiễu khám phá Ornstein--Uhlenbeck \\
+$|\mathcal{D}|$ & Kích thước bộ đệm phát lại (replay buffer) \\
+$\mathds{1}[\cdot]$ & Hàm chỉ thị (indicator function) \\
+\bottomrule
+\end{longtable}
+
+\vspace{0.4cm}
+\noindent\textbf{2. Các chữ viết tắt}\par
+\vspace{0.2cm}
+
+\renewcommand{\arraystretch}{1.2}
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{p{2cm} p{7cm} p{5.5cm}}
+\toprule
+\textbf{Viết tắt} & \textbf{Tiếng Anh} & \textbf{Tiếng Việt} \\
+\midrule
+\endhead
+6G   & Sixth Generation                       & Thế hệ thứ sáu \\
+AI   & Artificial Intelligence                & Trí tuệ nhân tạo \\
+BCD  & Block Coordinate Descent               & Hạ dần khối tọa độ \\
+BS   & Base Station                           & Trạm gốc \\
+CSI  & Channel State Information              & Thông tin trạng thái kênh \\
+CTDE & Centralised Training, Decentralised Execution & Huấn luyện tập trung, thực thi phân tán \\
+DDPG & Deep Deterministic Policy Gradient     & Gradient chính sách tất định sâu \\
+DL   & Deep Learning                          & Học sâu \\
+DRL  & Deep Reinforcement Learning            & Học tăng cường sâu \\
+DQN  & Deep Q-Network                         & Mạng Q sâu \\
+ES   & Energy Splitting                       & Chia tách năng lượng \\
+ISAC & Integrated Sensing and Communication   & Cảm biến và truyền thông tích hợp \\
+LOS  & Line of Sight                          & Đường truyền thẳng \\
+MA   & Multiple Access                        & Đa truy nhập \\
+MADDPG & Multi-Agent DDPG                     & DDPG đa tác tử \\
+MARL & Multi-Agent Reinforcement Learning     & Học tăng cường đa tác tử \\
+MDP  & Markov Decision Process                & Quá trình ra quyết định Markov \\
+MIMO & Multiple-Input Multiple-Output         & Nhiều ngõ vào nhiều ngõ ra \\
+MLP  & Multi-Layer Perceptron                 & Mạng nơ-ron đa lớp \\
+MS   & Mode Switching                         & Chuyển đổi chế độ \\
+NLOS & Non-Line-of-Sight                      & Không có đường truyền thẳng \\
+NN   & Neural Network                         & Mạng nơ-ron \\
+NOMA & Non-Orthogonal Multiple Access         & Đa truy nhập không trực giao \\
+OFDMA & Orthogonal Frequency-Division MA      & Đa truy nhập phân chia theo tần số trực giao \\
+OMA  & Orthogonal Multiple Access             & Đa truy nhập trực giao \\
+OU   & Ornstein--Uhlenbeck                    & Nhiễu Ornstein--Uhlenbeck \\
+PPO  & Proximal Policy Optimisation           & Tối ưu hóa chính sách lân cận \\
+QoS  & Quality of Service                     & Chất lượng dịch vụ \\
+ReLU & Rectified Linear Unit                  & Đơn vị tuyến tính chỉnh lưu \\
+RF   & Radio Frequency                        & Tần số vô tuyến \\
+RIS  & Reconfigurable Intelligent Surface     & Bề mặt phản xạ thông minh \\
+RL   & Reinforcement Learning                 & Học tăng cường \\
+RSMA & Rate-Splitting Multiple Access         & Đa truy nhập theo phân tách tốc độ \\
+SDMA & Space-Division Multiple Access         & Đa truy nhập phân chia theo không gian \\
+SIC  & Successive Interference Cancellation   & Khử nhiễu liên tiếp \\
+SINR & Signal-to-Interference-plus-Noise Ratio & Tỷ số tín hiệu trên nhiễu cộng tạp âm \\
+SISO & Single-Input Single-Output             & Một ngõ vào một ngõ ra \\
+STAR-RIS & Simultaneously Transmitting And Reflecting RIS & RIS truyền-phản xạ đồng thời \\
+SWIPT & Simultaneous Wireless Information and Power Transfer & Truyền tin và điện đồng thời \\
+TD3  & Twin Delayed DDPG                      & DDPG sinh đôi trì hoãn \\
+TS   & Time Switching                         & Chuyển đổi thời gian \\
+UAV  & Unmanned Aerial Vehicle                & Phương tiện bay không người lái \\
+UE   & User Equipment                         & Thiết bị người dùng \\
+URLLC & Ultra-Reliable Low-Latency Comms.     & Truyền thông siêu tin cậy độ trễ thấp \\
+\bottomrule
+\end{longtable}
+
+% --------- DANH MỤC BẢNG ----------------------------------------------------
+\clearpage
+\thispagestyle{empty}
+\renewcommand{\listtablename}{\hfill DANH MỤC CÁC BẢNG \hfill}
+\listoftables
+
+% --------- DANH MỤC HÌNH ----------------------------------------------------
+\clearpage
+\thispagestyle{empty}
+\renewcommand{\listfigurename}{\hfill DANH MỤC CÁC HÌNH ẢNH \hfill}
+\listoffigures

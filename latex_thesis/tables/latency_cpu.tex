@@ -1,0 +1,25 @@
+\begin{table}[t]
+\centering
+\small
+\caption{Độ trễ suy luận trên CPU một luồng (\texttt{torch.set\_num\_threads(1)}, \texttt{torch.inference\_mode}, đo cả tiền/hậu xử lý, $2000$ lần gọi sau khởi động ấm; $N=32$). Đây là bảng CPU độc lập; không so sánh chéo với GPU.}
+\label{tab:latency_cpu}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Phương pháp} & \textbf{Trung bình} & \textbf{Trung vị} & \textbf{p95} & \textbf{Số lần} \\
+                     & (ms)                & (ms)              & (ms)          & gọi            \\
+\midrule
+MADDPG          & $0{,}60$  & $0{,}59$  & $0{,}68$  & $2000$ \\
+TD3             & $0{,}25$  & $0{,}24$  & $0{,}28$  & $2000$ \\
+TD3-Matched     & $0{,}27$  & $0{,}26$  & $0{,}29$  & $2000$ \\
+DDPG            & $0{,}25$  & $0{,}25$  & $0{,}27$  & $2000$ \\
+PPO             & $0{,}49$  & $0{,}48$  & $0{,}54$  & $2000$ \\
+\midrule
+Analytical-RIS  & $0{,}02$  & $0{,}02$  & $0{,}02$  & $2000$ \\
+AO-Grid         & $13{,}97$ & $13{,}81$ & $15{,}10$ & $20$   \\
+\bottomrule
+\end{tabular}
+
+\vspace{0.2em}
+{\footnotesize Ghi chú: Mọi thuật toán DRL suy luận dưới $1$ ms/quyết định, thỏa yêu cầu thời gian thực theo từng coherence block. MADDPG chậm nhất trong nhóm DRL ($0{,}60$ ms) do phải chạy ba mạng actor, nhưng vẫn nhanh hơn heuristic AO-Grid ($13{,}97$ ms) khoảng $23$ lần. Số đo GPU (nếu có) được báo cáo ở bảng riêng; câu ``đo trên cùng phần cứng CPU'' chỉ áp dụng cho bảng này.\par}
+\hfill {\footnotesize\itshape Nguồn: Tác giả xây dựng (2026)}
+\end{table}

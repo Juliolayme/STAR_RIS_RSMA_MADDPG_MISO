@@ -1,0 +1,200 @@
+% =============================================================================
+%  MỞ ĐẦU (3-5 trang)
+% =============================================================================
+\chapter*{MỞ ĐẦU}
+\addcontentsline{toc}{chapter}{MỞ ĐẦU}
+\markboth{MỞ ĐẦU}{}
+
+\section*{1. Tính cấp thiết của đề tài}
+\addcontentsline{toc}{section}{1. Tính cấp thiết của đề tài}
+
+Mạng thông tin di động thế hệ thứ sáu (6G) được kỳ vọng sẽ vượt xa các thế
+hệ trước về thông lượng (lên tới $1$~Tbps), độ trễ siêu thấp (dưới
+$0{,}1$~ms) và mật độ kết nối khổng lồ ($10^7$ thiết bị/km$^2$)
+\cite{saad2020vision6g}, \cite{tataria20216g}. Để đáp ứng các yêu cầu khắt khe đó,
+nhiều công nghệ then chốt được nghiên cứu, trong đó hai hướng nổi bật là
+Đa truy nhập theo phân tách tốc độ (Rate-Splitting Multiple Access
+RSMA) và Bề mặt phản xạ thông minh có khả năng truyền-phản xạ đồng thời
+(Simultaneously Transmitting And Reflecting Reconfigurable Intelligent
+Surface, STAR-RIS) \cite{mao2022rsma}, \cite{liu2021starris}, \cite{mu2022simultaneously}.
+
+RSMA cho phép trạm gốc phân tách thông điệp của mỗi người dùng thành một
+phần chung (common) và một phần riêng (private), sau đó truyền
+đồng thời qua cùng tài nguyên thời gian-tần số. Tại phía thu, người dùng
+giải mã luồng chung trước, áp dụng khử nhiễu liên tiếp (SIC) và sau đó giải
+mã luồng riêng. Cách thiết kế này tạo nên khả năng quản lý nhiễu mềm dẻo
+hơn so với các kỹ thuật trực giao (OMA) và không trực giao truyền thống
+(NOMA), đặc biệt là trong điều kiện thông tin trạng thái kênh không hoàn
+hảo \cite{mao2018rsma}, \cite{mao2022rsma}.
+
+STAR-RIS là sự mở rộng của RIS truyền thống, gồm $N$ phần tử thụ động có thể
+đồng thời điều chỉnh pha cả tín hiệu phản xạ và tín hiệu truyền qua
+mặt phẳng RIS. Đặc tính này biến vùng phủ sóng từ nửa không gian
+$180^\circ$ thành toàn không gian $360^\circ$, mở ra khả năng phục vụ
+người dùng ở hai phía của bề mặt thông minh \cite{liu2021starris}, \cite{mu2022simultaneously}.
+
+Tuy nhiên, khi tích hợp RSMA và STAR-RIS, bài toán phân bổ tài nguyên
+trở nên cực kỳ phức tạp: ta phải đồng thời tối ưu hóa (i) công suất phát
+giữa luồng chung và các luồng riêng, (ii) tỷ lệ phân chia luồng chung cho
+từng người dùng, (iii) biên độ và pha của mỗi phần tử STAR-RIS ở cả hai
+chế độ phản xạ và truyền qua. Bài toán này có tính phi lồi cao do các
+hàm SINR phụ phi tuyến vào biến công suất và vào tích vô hướng phức của
+vector pha. Các phương pháp tối ưu truyền thống như hạ dần khối tọa độ
+(BCD), nới lỏng nửa xác định (SDR) hoặc tối ưu xen kẽ (AO) tuy có thể
+cho lời giải gần tối ưu nhưng đòi hỏi chi phí tính toán lớn, không phù
+hợp cho triển khai thời gian thực trong môi trường kênh biến thiên nhanh
+\cite{wu2020smart}.
+
+Học tăng cường sâu (DRL), và đặc biệt là phiên bản đa tác tử MADDPG
+cung cấp một con đường khác: thay vì giải tường minh bài toán tối ưu, tác tử
+học chính sách phân bổ tài nguyên trực tiếp từ tương tác với môi trường
+\cite{sutton2018reinforcement}, \cite{lillicrap2016continuous}, \cite{lowe2017multi}.
+Sau khi huấn luyện, suy luận chỉ cần một lần chạy tiến (forward pass) của
+mạng nơ-ron, có độ phức tạp gần như hằng số, lý tưởng cho yêu cầu thời
+gian thực của 6G \cite{noman2026drl6g}, \cite{hieu2021optimal}. Vì các lý do trên,
+việc nghiên cứu ứng dụng MADDPG để tối ưu phân bổ tài nguyên trong
+mạng STAR-RIS hỗ trợ RSMA mang ý nghĩa khoa học và thực tiễn rõ rệt.
+
+\section*{2. Mục tiêu nghiên cứu}
+\addcontentsline{toc}{section}{2. Mục tiêu nghiên cứu}
+
+\noindent\textbf{Mục tiêu tổng quát:} Xây dựng và đánh giá một khuôn khổ
+học tăng cường sâu đa tác tử cho bài toán tối ưu phân bổ tài nguyên đường
+xuống trong mạng STAR-RIS hỗ trợ RSMA, sao cho tối đa hóa tổng tốc độ hệ
+thống đồng thời tối ưu cân bằng giữa thông lượng và mức đáp ứng chất lượng
+dịch vụ (QoS) của từng người dùng thông qua một hàm mục tiêu thay thế
+(surrogate) dạng phạt/Lagrangian của ràng buộc QoS, tương ứng với ràng buộc
+kỳ vọng $\mathbb{E}[R_k] \geq R_{\min}$.
+
+\noindent\textbf{Mục tiêu cụ thể:}
+\begin{enumerate}[label=(\arabic*),leftmargin=*]
+\item Xây dựng mô hình hệ thống đầy đủ: kênh truyền (trực tiếp, gián tiếp
+qua STAR-RIS, suy hao đường truyền log-distance, pha-đinh Rayleigh),
+mô hình tín hiệu RSMA, và bài toán tối ưu phân bổ tài nguyên (P0) với
+đầy đủ các ràng buộc về công suất, bảo toàn năng lượng STAR-RIS, phân
+chia luồng chung và QoS.
+\item Đề xuất khuôn khổ MADDPG với ba tác tử chuyên dụng (BS Power, STAR-RIS
+Reflection, STAR-RIS Transmission) cùng hai cải tiến: (i) tham số hóa
+pha residual dựa trên nghiệm phân tích bậc một và (ii) hàm phần thưởng
+dạng Lagrangian với các hệ số phạt $\lambda_k$ riêng cho từng người dùng,
+được cập nhật bằng phương pháp gradient đối ngẫu có phép chiếu
+(projected dual gradient) trên khe hở ràng buộc có dấu
+$c_k = R_{\min} - R_k$, để cân bằng tốc độ tổng và QoS.
+\item Cài đặt mô phỏng và đánh giá toàn diện hiệu năng so với các baseline
+(DDPG đơn tác tử, TD3, TD3 cân bằng tham số, PPO, AO-Grid, Random-RIS,
+Fixed-RIS, NoRIS) trên các phương diện: hội tụ huấn luyện, tổng tốc độ,
+mức đáp ứng QoS, độ trễ suy luận và phân tích loại trừ (ablation) đối
+với chế độ STAR-RIS.
+\end{enumerate}
+
+\section*{3. Đối tượng nghiên cứu}
+\addcontentsline{toc}{section}{3. Đối tượng nghiên cứu}
+
+\begin{itemize}[leftmargin=*]
+\item Mạng vô tuyến đường xuống STAR-RIS hỗ trợ RSMA, gồm trạm gốc, bề mặt
+phản xạ thông minh và các thiết bị người dùng ở cả hai phía của bề mặt.
+\item Bài toán tối ưu phân bổ đa biến (công suất, biên độ, pha, tỷ lệ tách
+luồng) cho mạng nêu trên.
+\item Thuật toán học tăng cường sâu MADDPG và các thuật toán DRL tham
+chiếu (DDPG, TD3, PPO).
+\item Các phương pháp tối ưu cổ điển làm mốc so sánh: heuristic tối ưu xen
+kẽ dạng lưới thô (AO-Grid), tìm kiếm cục bộ AO lai (Hybrid AO Local
+Search, SLSQP + projected gradient) và nghiệm phân tích bậc một
+(MaxMin-Aligned). Các phương pháp này là mốc tham chiếu cục bộ, không
+phải cận trên tối ưu.
+\end{itemize}
+
+\section*{4. Phạm vi nghiên cứu}
+\addcontentsline{toc}{section}{4. Phạm vi nghiên cứu}
+
+\noindent\textbf{Phạm vi nội dung:} Tập trung vào bài toán tối ưu sum-rate
+với ràng buộc QoS cho cấu hình truyền đường xuống một trạm gốc đơn anten
+($M=1$, SISO), một STAR-RIS có $N=32$ phần tử ở chế độ chia sẻ năng lượng
+(ES), $K=4$ người dùng (gồm 3 người dùng vùng phản xạ và 1 người dùng
+vùng truyền qua chịu suy hao chướng ngại $-25$~dB). Không xem xét chế độ
+chuyển đổi MS/TS, RIS chủ động, RIS đa lớp hay các kịch bản MIMO.
+
+\noindent\textbf{Phạm vi không gian:} Mô phỏng số học bằng phần mềm
+Python/PyTorch trên máy tính cá nhân, không triển khai phần cứng vật lý.
+
+\noindent\textbf{Phạm vi thời gian:} Đề tài được nghiên cứu, mô phỏng và
+hoàn thiện trong giai đoạn 2025--2026.
+
+\section*{5. Phương pháp nghiên cứu}
+\addcontentsline{toc}{section}{5. Phương pháp nghiên cứu}
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{Phương pháp mô hình hóa toán học:} Xây dựng mô hình hệ thống,
+phát biểu bài toán tối ưu (P0) và ánh xạ sang quá trình ra quyết định
+Markov (MDP).
+\item \textbf{Phương pháp học máy:} Thiết kế kiến trúc mạng nơ-ron Actor và
+Critic, áp dụng cơ chế huấn luyện tập trung, thực thi phân tán (CTDE)
+trong MADDPG, sử dụng các kỹ thuật nâng cao như mạng mục tiêu (target
+networks) với cập nhật mềm, nhiễu khám phá Ornstein--Uhlenbeck (OU),
+chuẩn hóa lớp (LayerNorm) và cắt gradient.
+\item \textbf{Phương pháp thực nghiệm:} Mô phỏng đa hạt giống huấn luyện
+(8 hạt giống độc lập) với khoảng tin cậy $95\%$ Student-t tính qua các
+hạt giống huấn luyện; đánh giá trên tập kịch bản kiểm tra khóa
+(ScenarioBank) tách biệt khỏi tập validation dùng cho tinh chỉnh; so
+sánh với các baseline DDPG, TD3, PPO, AO-Grid, Random, Fixed, NoRIS;
+phân tích loại trừ và kiểm định ý nghĩa thống kê theo cặp (paired
+t-test, permutation test) với hiệu chỉnh Holm--Bonferroni cho so sánh
+bội.
+\end{itemize}
+
+\section*{6. Ý nghĩa khoa học và thực tiễn}
+\addcontentsline{toc}{section}{6. Ý nghĩa khoa học và thực tiễn}
+
+\noindent\textbf{Về mặt lý luận:}
+\begin{itemize}[leftmargin=*]
+\item Mở rộng bài toán P0 cổ điển bằng việc bổ sung ràng buộc QoS từng
+người dùng và xem xét biên độ STAR-RIS như biến tối ưu thay vì cố định.
+\item Đề xuất tham số hóa pha residual, một kỹ thuật giúp giảm
+không gian khám phá của tác tử pha và cải thiện đáng kể tốc độ hội tụ.
+\item Đề xuất hàm phần thưởng dạng Lagrangian surrogate với các hệ số
+$\lambda_k$ riêng cho từng người dùng, được cập nhật bằng projected dual
+gradient trên khe hở ràng buộc có dấu, cho phép tự điều chỉnh cân bằng
+giữa tổng tốc độ và mức đáp ứng QoS mà không cần điều chỉnh thủ công.
+\item Đề xuất lịch trình huấn luyện hai pha đóng băng hệ số phạt
+(two-stage dual freeze), một heuristic làm cho hàm phần thưởng trở nên
+dừng ở giai đoạn cuối huấn luyện để đường cong huấn luyện dễ diễn giải;
+lưu ý rằng vùng phẳng (plateau) của phần thưởng không tự nó chứng minh
+chính sách đã hội tụ.
+\end{itemize}
+
+\noindent\textbf{Về mặt thực tiễn:}
+\begin{itemize}[leftmargin=*]
+\item Kết quả mô phỏng cho thấy tiềm năng triển khai thực tế của MADDPG
+cho phân bổ tài nguyên thời gian thực trong 6G: sau huấn luyện, mỗi
+quyết định chỉ cần một lần chạy tiến của mạng nơ-ron (độ trễ đo được
+$\approx 1{,}3$~ms/hành động ở pipeline cũ, thấp hơn một bậc so với
+heuristic AO-Grid giải lại cho từng thể hiện kênh; số liệu chính thức
+sẽ dùng cặp bảng CPU/GPU đo riêng của pipeline mới), đồng thời định
+lượng lợi thế mở rộng của kiến trúc đa tác tử khi số phần tử STAR-RIS
+tăng tới $N=128$.
+\item Cung cấp một thư viện mã nguồn (Python/PyTorch) sẵn sàng tái sử dụng
+cho các nghiên cứu tiếp theo về phân bổ tài nguyên trong mạng RIS hoặc
+RSMA.
+\item Cấu hình mô phỏng (STAR-RIS $N=32$, $K=4$, $P_{\max}=30$~dBm) là một
+chuẩn so sánh tham chiếu hữu ích cho cộng đồng nghiên cứu trong lĩnh
+vực này.
+\end{itemize}
+
+\section*{7. Kết cấu của Luận văn}
+\addcontentsline{toc}{section}{7. Kết cấu của Luận văn}
+
+Ngoài phần Mở đầu và Kết luận, Luận văn gồm bốn chương như sau:
+\begin{itemize}[leftmargin=*]
+\item \textbf{Chương 1, Cơ sở lý thuyết:} Trình bày tổng quan về mạng 6G,
+nguyên lý RSMA, công nghệ STAR-RIS, khuôn khổ DRL và thuật toán MADDPG.
+\item \textbf{Chương 2, Mô hình hệ thống và bài toán tối ưu:} Xây dựng
+mô hình kênh truyền, mô hình tín hiệu RSMA, phát biểu bài toán tối ưu
+(P0) và ánh xạ sang MDP.
+\item \textbf{Chương 3, Phương pháp đề xuất MADDPG:} Trình bày chi tiết
+kiến trúc ba tác tử chuyên dụng, mạng nơ-ron Actor-Critic, các cải
+tiến (residual phase, Lagrangian reward thích nghi) và quy trình huấn
+luyện.
+\item \textbf{Chương 4, Kết quả mô phỏng và đánh giá:} Trình bày toàn bộ
+kết quả mô phỏng số học, so sánh với các baseline, phân tích loại trừ
+và thảo luận về ý nghĩa thực tiễn.
+\end{itemize}

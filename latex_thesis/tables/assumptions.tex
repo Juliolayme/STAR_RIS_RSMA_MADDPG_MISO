@@ -1,0 +1,41 @@
+\begin{table}[t]
+\centering
+\small
+\caption{Tổng hợp các giả thiết hệ thống và lý do biện minh.}
+\label{tab:assumptions}
+\begin{tabular}{p{5.5cm} p{9cm}}
+\toprule
+\textbf{Giả thiết} & \textbf{Biện minh khoa học} \\
+\midrule
+A1. Thông tin trạng thái kênh hoàn hảo (Perfect CSI) tại BS &
+Giả thiết tiêu chuẩn trong cộng đồng RIS/RSMA để cô lập hiệu ứng thuật toán \cite{liu2021starris}, \cite{mao2022rsma}. Trường hợp CSI không hoàn hảo được nêu trong Hướng nghiên cứu tiếp theo. \\
+\addlinespace
+A2. Pha-đinh Rayleigh độc lập (i.i.d.\ Rayleigh fading) &
+Mô hình chuẩn cho môi trường tán xạ phong phú không có thành phần LoS chiếm ưu thế; được dùng rộng rãi trong nghiên cứu STAR-RIS \cite{mu2022simultaneously}. \\
+\addlinespace
+A3. Truyền đường xuống một cell, một BS đơn anten (SISO) &
+Tập trung phân tích hiệu ứng STAR-RIS và RSMA mà không bị làm phức tạp bởi beamforming MIMO; cung cấp baseline rõ ràng để mở rộng MIMO sau này. \\
+\addlinespace
+A4. STAR-RIS thụ động, không khuếch đại (passive) &
+Phù hợp với phần cứng STAR-RIS hiện tại; chế độ ES được chọn vì là chế độ tổng quát nhất \cite{liu2021starris}. \\
+\addlinespace
+A5. Ngân sách công suất phát hữu hạn $P_{\max} = 30$ dBm &
+Tương ứng với mức công suất BS thực tế trong các small cell hoặc indoor AP \cite{wu2020smart}. \\
+\addlinespace
+A6. Pha-đinh khối động (dynamic block-fading): mỗi bước là một khối coherence, pha-đinh phạm vi hẹp tiến hóa Gauss--Markov với $\rho=0{,}95$ &
+Mỗi bước điều khiển tương ứng một khối coherence; kênh tiến hóa theo tương quan thời gian giữa các bước (phương trình \eqref{eq:gauss_markov}), khiến hành động ảnh hưởng tới các bước sau và làm cho hệ số chiết khấu $\gamma$ có ý nghĩa. Chế độ static-block (kênh cố định cả episode) chỉ giữ để tái lập kết quả cũ. \\
+\addlinespace
+A9. STAR-RIS lý tưởng: pha liên tục, pha R/T độc lập, không tổn hao chèn, không trễ tái cấu hình (ideal independent-phase ES) &
+Giả thiết chuẩn để cô lập giới hạn thuật toán; các tác động phần cứng (lượng tử pha, pha ghép cặp, insertion loss) được nêu trong Hạn chế/Hướng nghiên cứu tiếp theo. \\
+\addlinespace
+A7. Khử nhiễu liên tiếp hoàn hảo (Perfect SIC) tại UE &
+Giả thiết tiêu chuẩn trong văn liệu RSMA \cite{mao2022rsma}; lỗi SIC được khảo sát trong \cite{gomes2024performance}. \\
+\addlinespace
+A8. Người dùng vùng truyền qua T chịu suy hao chướng ngại $-25$ dB &
+Mô phỏng kịch bản NLoS điển hình nơi STAR-RIS thực sự cần thiết để cung cấp kết nối tin cậy. \\
+\bottomrule
+\end{tabular}
+
+\vspace{0.2em}
+\hfill {\footnotesize\itshape Nguồn: Tác giả tổng hợp (2026)}
+\end{table}

@@ -1,0 +1,2 @@
+Method,SumRate_mean,SumRate_CI95,UserQoSFraction,UserQoSFraction_CI95,n_scenarios,n_evaluation_seeds,scenarios_per_evaluation_seed,blocks_per_scenario,ConvergenceRate,TotalNEvals,MeanSolveTimeMs,TotalWallTimeMs,ci_unit,note
+Hybrid AO Local Search (SLSQP + projected gradient),11.813090229728882,1.572800674754253,0.25,0.0,5,5,1,3,0.0,2743727,21021.427453333064,315321.411799996,scenario_mean,"local-search reference, NOT an upper bound"

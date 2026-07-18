@@ -1,0 +1,47 @@
+\begin{table}[t]
+\centering
+\small
+\caption{Tham số mô phỏng đầy đủ của hệ thống và thuật toán.}
+\label{tab:simulation_parameters}
+\begin{tabular}{ll}
+\toprule
+\textbf{Tham số} & \textbf{Giá trị} \\
+\midrule
+\multicolumn{2}{l}{\textbf{Cấu hình hệ thống}} \\
+Số người dùng tổng ($K$) & 4 \\
+Số người dùng vùng phản xạ ($K_R$) & 3 \\
+Số phần tử STAR-RIS ($N$) & 32 \\
+Số anten BS ($M$) & 1 \\
+Công suất phát tối đa $P_{\max}$ & $30$ dBm \\
+Công suất tạp âm $\sigma^2$ & $-90$ dBm \\
+QoS tối thiểu $R_{\min}$ & $0{,}3$ b/s/Hz \\
+Suy hao chướng ngại UE$_T$ & $25$ dB \\
+Số mũ suy hao kênh trực tiếp $\alpha_d$ & $3{,}5$ \\
+Số mũ suy hao kênh BS-RIS $\alpha_G$ & $2{,}2$ \\
+Số mũ suy hao kênh RIS-UE $\alpha_r$ & $2{,}5$ \\
+\midrule
+Hệ số tương quan kênh Gauss--Markov $\rho$ & $0{,}95$ \\
+\midrule
+\multicolumn{2}{l}{\textbf{Tham số hàm phần thưởng (Lagrangian surrogate)}} \\
+Hệ số $\alpha$ sum-rate / $R_{\text{ref}}$ & $1{,}5$ / $20$ b/s/Hz \\
+Trọng số augmented penalty $w$ & $1{,}0$ \\
+$\lambda_k$ ban đầu / miền chiếu & $1{,}0$ / $[0,\,20]$ \\
+Tốc độ học đối ngẫu $\eta_\lambda$ / EMA & $0{,}01$ / $0{,}9$ \\
+Tỷ lệ đóng băng $\lambda$ ($\rho_f$) & $0{,}55$ \\
+Trọng số switching cost $\eta_\phi/\eta_P/\eta_\beta$ & $0{,}1$ / $0{,}05$ / $0{,}05$ \\
+Biên độ residual pha & $\pm\pi/4$ \\
+\midrule
+\multicolumn{2}{l}{\textbf{Tham số huấn luyện}} \\
+Số episode mỗi thuật toán & $2\,000$ \\
+Số hạt giống huấn luyện & $8$ (cấu hình chuẩn) / $10$ (sweep $N$) \\
+Hạt giống validation / test (khóa) & $[11,\ldots,55]$ / $[70001,\ldots,70005]$ \\
+Nguồn seed split / SHA-256 & \texttt{seed\_split.v1.yaml} / \texttt{d73ba5aea6d0\ldots f118854} \\
+Số bước warmup ngẫu nhiên & $5\,000$ \\
+Mốc đóng băng normalizer quan sát & $5\,000$ bước môi trường \\
+Số bước decay nhiễu OU & $45\,000$ \\
+\bottomrule
+\end{tabular}
+
+\vspace{0.2em}
+\hfill {\footnotesize\itshape Nguồn: Tác giả xây dựng (2026)}
+\end{table}

@@ -1,0 +1,254 @@
+% =============================================================================
+%  KẾT LUẬN
+% =============================================================================
+\chapter*{KẾT LUẬN}
+\addcontentsline{toc}{chapter}{KẾT LUẬN}
+\markboth{KẾT LUẬN}{}
+
+\section*{1. Tóm tắt kết quả nghiên cứu}
+\addcontentsline{toc}{section}{1. Tóm tắt kết quả nghiên cứu}
+
+Luận văn đã giải quyết bài toán tối ưu phân bổ tài nguyên đường xuống
+trong mạng vô tuyến STAR-RIS hỗ trợ RSMA, một trong những bài toán
+trung tâm cho mạng vô tuyến 6G trong tương lai. Nội dung chính của
+Luận văn được tóm tắt như sau:
+
+\begin{enumerate}[label=\textbf{(\arabic*)},leftmargin=*]
+\item \textbf{Mô hình hệ thống đầy đủ.} Luận văn đã xây dựng chi tiết
+mô hình kênh truyền với các thành phần kênh trực tiếp (BS-UE), kênh
+gián tiếp (BS-RIS-UE), suy hao đường truyền log-distance, pha-đinh
+Rayleigh và chướng ngại $-25$ dB cho người dùng vùng T. Mô hình tín
+hiệu RSMA với phân tách luồng chung, luồng riêng và SIC đã được biểu
+diễn dưới dạng SISO tương đương qua kênh hiệu dụng $h_{\text{eff},k}$.
+
+\item \textbf{Bài toán tối ưu P0 mở rộng và surrogate DRL.} Luận văn đã
+phát biểu bài toán P0 đầy đủ với hàm mục tiêu max $R_{\text{sum}}$ và
+sáu nhóm ràng buộc, đặc biệt bổ sung ràng buộc QoS trên từng người
+dùng ($R_k \geq R_{\min}$). Để giải bằng DRL, ràng buộc cứng này được
+thay bằng một surrogate ràng buộc kỳ vọng ($\mathbb{E}[R_k] \geq
+R_{\min}$) với các biến đối ngẫu per-user; tính phi lồi của bài toán
+gốc đã được phân tích chi tiết.
+
+\item \textbf{Khuôn khổ MADDPG-CTDE ba tác tử chuyên dụng.} Luận văn
+đã thiết kế và cài đặt khuôn khổ MADDPG với ba tác tử (BS Power
+Allocator, STAR-RIS Reflection, STAR-RIS Transmission), cùng với cơ
+chế CTDE giúp ổn định môi trường đa tác tử.
+
+\item \textbf{Ba cải tiến kỹ thuật.} Tham số hóa pha residual dựa trên
+nghiệm phân tích bậc một (biên độ $\pm\pi/4$) giúp giảm không gian
+khám phá $4^N$ lần và cung cấp điểm khởi đầu hợp lý. Hàm phần thưởng
+Lagrangian surrogate với các biến đối ngẫu $\lambda_k$ per-user cập
+nhật bằng projected dual gradient trên khe hở ràng buộc có dấu giúp tự
+động cân bằng tổng tốc độ và QoS. Lịch trình heuristic hai pha
+(two-stage dual freeze, đóng băng $\boldsymbol{\lambda}$ ở $45\%$ cuối
+huấn luyện) làm cho hàm phần thưởng trở nên dừng, giúp đường cong huấn
+luyện dễ diễn giải (không phải một bảo đảm hội tụ).
+
+\item \textbf{Đánh giá thực nghiệm toàn diện.} 8 hạt giống huấn luyện
+độc lập tại cấu hình chuẩn và thí nghiệm quét theo $N \in \{16,
+\ldots, 128\}$ với 8 hạt giống/điểm (80 lần huấn luyện); so sánh với
+các baseline (DDPG, TD3, TD3-Matched, PPO, AO-Grid, Hybrid AO Local
+Search, MaxMinAligned, Fixed, Random, NoRIS); đánh giá trên tập kịch
+bản kiểm tra khóa với thống kê theo cặp và hiệu chỉnh Holm; phân tích
+trên các nhóm tiêu chí: hội tụ, tổng tốc độ, QoS, độ trễ, khả năng mở
+rộng, ablation, phân phối kênh và pha.
+
+\item \textbf{Kết quả định lượng nổi bật.} MADDPG đạt sum-rate
+$4{,}52 \pm 0{,}20$ b/s/Hz tại $P_{\max}=30$ dBm, $N=32$ --- cao nhất
+về mặt số học, nhưng sau kiểm định paired $+$ Holm chỉ vượt PPO có ý
+nghĩa ($+32\%$, $p_{\text{Holm}} = 3{,}7\times 10^{-6}$); so với TD3,
+TD3-Matched và DDPG là \emph{tương đương thống kê}. Thí nghiệm mở rộng
+theo $N$ (từ $16$ đến $128$) cho thấy MADDPG và TD3 tương đương ở
+\emph{mọi} $N$ ($p_{\text{Holm}} \geq 0{,}53$); kể cả biến thể tác tử
+đơn TD3-Matched (cùng tổng tham số) cũng không thua MADDPG có ý nghĩa.
+Như vậy giả thuyết ban đầu về lợi thế phân rã đa tác tử không được số
+liệu ủng hộ --- đóng góp được phát biểu lại: MADDPG là một công thức
+hóa CTDE cạnh tranh, ngang bằng tác tử đơn tốt nhất và suy luận thời
+gian thực ($\approx 0{,}60$ ms/hành động trên CPU, nhanh hơn $\approx
+23$ lần so với heuristic AO-Grid). STAR-RIS được khẳng định không thể
+thay thế qua phân tích loại trừ (bỏ STAR-RIS làm sum-rate giảm
+$\approx 41\%$ và xác suất QoS all-users giảm hơn $5$ lần).
+\end{enumerate}
+
+\section*{2. Đóng góp của Luận văn}
+\addcontentsline{toc}{section}{2. Đóng góp của Luận văn}
+
+\noindent\textbf{Về mặt lý luận:}
+\begin{itemize}[leftmargin=*]
+\item Mở rộng bài toán P0 cổ điển với ràng buộc QoS trên từng người dùng
+và biên độ STAR-RIS như biến tối ưu, phản ánh chính xác hơn yêu cầu
+thực tế của 6G.
+\item Đề xuất tham số hóa pha residual cho STAR-RIS, một kỹ thuật
+tổng quát có thể áp dụng cho các bài toán DRL khác liên quan đến biến
+tuần hoàn.
+\item Đề xuất hàm phần thưởng Lagrangian surrogate với các biến đối
+ngẫu per-user cập nhật bằng projected dual gradient, một thiết kế có
+thể áp dụng cho các bài toán DRL có ràng buộc kỳ vọng.
+\item Đề xuất lịch trình heuristic hai pha (two-stage dual freeze)
+làm giảm tính non-stationary của phần thưởng ở giai đoạn cuối huấn
+luyện, giúp đường cong huấn luyện dễ diễn giải; đây là một heuristic
+ổn định hóa, không phải một cơ chế có bảo đảm hội tụ điểm yên ngựa.
+\item Cung cấp bằng chứng thực nghiệm có kiểm định thống kê nghiêm ngặt
+(paired test $+$ Holm, $8$ hạt giống/điểm) \emph{kiểm chứng} giả thuyết
+``lợi thế phân rã CTDE tăng theo kích thước không gian hành động'':
+quét $N$ từ $16$ đến $128$ cho thấy giả thuyết này \emph{không} được
+ủng hộ --- MADDPG tương đương TD3 và TD3-Matched ở mọi $N$. Kết quả
+âm tính được báo cáo trung thực này bản thân nó là một đóng góp về
+phương pháp đánh giá công bằng (đơn vị mẫu mức hạt giống, baseline
+khớp tham số, hiệu chỉnh đa so sánh).
+\end{itemize}
+
+\noindent\textbf{Về mặt thực tiễn:}
+\begin{itemize}[leftmargin=*]
+\item Cung cấp một thư viện mã nguồn mở (Python/PyTorch) đầy đủ, có
+khả năng tái lập, sẵn sàng để mở rộng cho các nghiên cứu tiếp theo.
+\item Cấu hình mô phỏng $N=32, K=4, P_{\max}=30$ dBm trở thành một
+chuẩn so sánh tham chiếu hữu ích cho cộng đồng nghiên cứu STAR-RIS-RSMA.
+\item Chứng minh khả năng triển khai DRL cho phân bổ tài nguyên 6G
+trong điều kiện thời gian thực (độ trễ cỡ mili-giây, nhanh hơn $13$
+lần so với heuristic AO-Grid giải lại cho từng thể hiện kênh; số liệu
+chính thức dùng cặp bảng CPU/GPU đo riêng).
+\end{itemize}
+
+\section*{3. Hạn chế của nghiên cứu}
+\addcontentsline{toc}{section}{3. Hạn chế của nghiên cứu}
+
+Để đánh giá khách quan đóng góp của Luận văn, phần này thảo luận chi
+tiết các hạn chế và giới hạn áp dụng của khuôn khổ đề xuất, đồng thời
+chỉ ra các điều kiện biên mà ngoài đó các kết quả không còn được bảo
+đảm.
+
+\textbf{Cấu hình SISO ($M=1$).} Luận văn tập trung vào trạm gốc đơn
+anten để cô lập hiệu ứng STAR-RIS và RSMA mà không bị làm phức tạp
+bởi beamforming MIMO. Tuy nhiên, các mạng 6G thực tế thường sử dụng
+MIMO/massive MIMO với $M \geq 32$ anten. Mở rộng sang MIMO sẽ làm tăng
+không gian hành động của tác tử BS lên đáng kể (thêm vector tiền mã
+hóa $\mathbf{w}_k \in \mathbb{C}^{M \times 1}$ cho mỗi luồng), đòi hỏi
+kiến trúc mạng nơ-ron có khả năng xử lý đầu ra phức tạp hơn
+\cite{wu2024deep}. Đây là hướng mở rộng tự nhiên nhưng không tầm thường.
+
+\textbf{Giả thiết CSI hoàn hảo.} Giả thiết A1 (Bảng \ref{tab:assumptions})
+là tiêu chuẩn trong các nghiên cứu mốc so sánh hiệu năng, nhưng không
+phản ánh thực tế. Việc ước lượng kênh $\mathbf{h}_{r,k}^X$ giữa STAR-RIS và
+UE đặc biệt khó khăn vì STAR-RIS thụ động không có RF chain để xử lý
+pilot. Các kỹ thuật ước lượng kênh chuyên biệt cho RIS (như cascaded
+channel estimation) có sai số điển hình $5$--$10\%$
+\cite{wu2024deep}, có thể ảnh hưởng đáng kể đến hiệu năng MADDPG trong
+thực tế \cite{cernaloli2023meta}.
+
+\textbf{Mô hình kênh đơn giản hóa.} Pha-đinh Rayleigh i.i.d.\ là mô
+hình tốt cho môi trường tán xạ phong phú nhưng không phản ánh các kịch
+bản 6G phức tạp hơn như near-field communication, mmWave/THz với
+clustering effect, hay correlated fading. Mô hình kênh dựa trên hình
+học (geometry-based stochastic model) sẽ phù hợp hơn cho các tình
+huống này, nhưng đòi hỏi mở rộng tham số hệ thống.
+
+\textbf{Cấu hình một cell.} Luận văn chỉ xét một cell đơn lẻ với một
+BS và một STAR-RIS. Trong thực tế, các mạng đa cell có hiện tượng nhiễu
+liên cell (inter-cell interference), handover, và phối hợp đa BS
+(CoMP). Mở rộng sang đa cell yêu cầu cơ chế phối hợp giữa các MADDPG
+controller, có thể được nghiên cứu thông qua federated MARL.
+
+\textbf{Kiến trúc mạng gắn với cấu hình huấn luyện.} Mạng nơ-ron
+Actor và Critic có kích thước cố định theo cấu hình $(N, K)$; khi
+$N$ hoặc $K$ thay đổi, cần huấn luyện lại từ đầu (thí nghiệm quét
+$N$ ở Chương \ref{ch:chuong4} thực hiện đúng theo cách này). Kiến
+trúc graph neural network hoặc transformer-based policy có thể học
+chính sách tổng quát hóa theo kích thước, nhưng chưa được khảo sát
+trong Luận văn này.
+
+\textbf{Hạn chế phần cứng STAR-RIS.} Pha STAR-RIS được giả định liên
+tục trong $[0, 2\pi)$. Phần cứng STAR-RIS hiện tại chỉ hỗ trợ pha
+lượng tử với $1$--$3$ bit (tương ứng $2, 4, 8$ mức pha rời rạc). Tác
+động lượng tử hóa lên hiệu năng MADDPG chưa được khảo sát; có thể yêu
+cầu post-processing rời rạc hóa hoặc huấn luyện với quantized action
+space.
+
+\textbf{Đánh giá chỉ qua mô phỏng số.} Tất cả kết quả được thu nhận
+qua mô phỏng số trên Python/PyTorch, chưa có hardware-in-the-loop
+validation hay SDR testbed evaluation. Việc kiểm chứng trên phần cứng
+thực sẽ phát hiện các yếu tố không được mô hình hóa như jitter,
+clock drift, hardware impairment ở BS và STAR-RIS.
+
+\textbf{Cỡ mẫu và thiết kế thống kê.} Cả cấu hình chuẩn lẫn thí nghiệm
+quét $N$ đều dùng $8$ hạt giống huấn luyện/điểm --- tiệm cận khuyến
+nghị $N \geq 10$ của cộng đồng DRL; các kết luận chính dùng thống kê
+theo cặp (paired test) trên các trung bình mức hạt giống với hiệu
+chỉnh Holm--Bonferroni. Với cỡ mẫu $n=8$, lực kiểm định còn hạn chế:
+hiệu số MADDPG--DDPG tuy có kích thước hiệu ứng lớn ($d=0{,}98$) vẫn
+chưa đạt ngưỡng ý nghĩa sau hiệu chỉnh ($p_{\text{Holm}}=0{,}081$), nên
+một số so sánh cần cỡ mẫu lớn hơn để kết luận chắc chắn. Đáng chú ý,
+baseline TD3-Matched (tác tử đơn có tổng tham số khớp MADDPG) cho phép
+tách bạch vai trò của \emph{phân rã đa tác tử} khỏi dung lượng mạng:
+kết quả cho thấy MADDPG không vượt TD3-Matched có ý nghĩa, nên lợi thế
+(nếu có) của phân rã không thể được khẳng định trong khảo sát này.
+
+\section*{4. Hướng nghiên cứu tiếp theo}
+\addcontentsline{toc}{section}{4. Hướng nghiên cứu tiếp theo}
+
+Dựa trên phân tích các hạn chế, Luận văn đề xuất bảy hướng nghiên cứu
+tiếp theo, được sắp xếp theo mức độ khả thi và ưu tiên thực tiễn.
+
+\textbf{H1. Khuôn khổ MADDPG cho MIMO BS với beamforming.} Mở rộng tác
+tử BS Power Agent thành tác tử Joint Power-Beamforming Agent, xuất ra
+cả $\{P_c, P_k, c_k\}$ và các vector tiền mã hóa $\mathbf{w}_k \in
+\mathbb{C}^{M \times 1}$. Kích thước hành động tăng tuyến tính theo
+$M$, nhưng cấu trúc phân rã ba tác tử vẫn duy trì được. Hướng này
+giúp tận dụng các băng tần mmWave/THz với mảng anten lớn
+\cite{wu2024deep}, \cite{wang2024rsbnn}.
+
+\textbf{H2. Xử lý CSI không hoàn hảo bằng Robust RL hoặc Meta-RL.}
+Hai hướng tiếp cận chính: (i) huấn luyện MADDPG với noise injection
+trên CSI để học chính sách bền vững (Robust RL); (ii) sử dụng
+meta-learning để học chính sách có khả năng thích nghi nhanh với phân
+phối CSI mới sau vài bước cập nhật \cite{faramarzi2024meta},
+\cite{cernaloli2023meta}. Hướng (ii) đặc biệt phù hợp với mạng vô
+tuyến không ổn định.
+
+\textbf{H3. MARL phân tán hoàn toàn (Fully Distributed MARL).} Hiện
+tại các Actor vẫn chia sẻ replay buffer trong huấn luyện. Trong các
+kịch bản đa cell hoặc đa nhóm tác tử, mỗi tác tử cần có replay buffer
+cục bộ và chỉ truyền thông giới hạn với các tác tử khác. Cách tiếp cận
+này giảm độ trễ truyền thông và tăng tính riêng tư \cite{mirza2024multi}.
+
+\textbf{H4. Hybrid AO--MADDPG initialization.} Sử dụng nghiệm AO local
+search (hoặc các phương pháp tối ưu cổ điển) để tạo dataset chính sách
+``chuyên gia'', sau đó dùng MADDPG fine-tune trên dataset đó để học
+chính sách vừa gần nghiệm tìm kiếm vừa khả thi thời gian thực. Hướng
+này có tiềm năng thu hẹp khoảng cách giữa heuristic AO-Grid ($5{,}17$
+b/s/Hz, một mốc so sánh --- không phải cận trên) và MADDPG hiện tại
+($4{,}52$ b/s/Hz, tức $\approx 87\%$ sum-rate của AO-Grid), đồng thời
+duy trì độ trễ suy luận cỡ mili-giây.
+
+\textbf{H5. Transformer-based policy cho variable-size $N, K$.} Thay
+thế MLP Actor bằng transformer hoặc graph attention network có khả
+năng xử lý input có kích thước thay đổi. Điều này giúp một chính sách
+được huấn luyện trên một cấu hình có thể tổng quát hóa sang nhiều cấu
+hình khác mà không cần huấn luyện lại.
+
+\textbf{H6. Ứng dụng cho ISAC và URLLC.} Kết hợp STAR-RIS RSMA với
+cảm biến tích hợp (Integrated Sensing and Communication) hoặc dịch vụ
+URLLC mở ra nhiều bài toán mới về cân bằng giữa truyền tin, cảm biến,
+và đáp ứng QoS độ trễ thấp \cite{soleymani2024starris},
+\cite{adams2024rsma}, \cite{jin2024arisrsma}, \cite{jang2024rsma}.
+Trong kịch bản ISAC, hàm phần thưởng cần được mở rộng để bao gồm cả
+sensing performance metrics.
+
+\textbf{H7. Federated MADDPG.} Trong các kịch bản multi-BS, mỗi BS có
+một MADDPG controller cục bộ. Bài toán đặt ra là làm thế nào để chia
+sẻ tri thức học được giữa các BS mà không cần truyền raw data
+(privacy-preserving). Federated Learning cung cấp khung tiếp cận tự
+nhiên cho vấn đề này \cite{noor2025aimulti}, \cite{mousavi2025fed}.
+
+\textbf{H8. Kiểm chứng phần cứng (Hardware-in-the-loop).} Triển khai
+khuôn khổ MADDPG trên SDR testbed (như USRP hoặc GNU Radio) hoặc hệ
+thống RIS thực tế để kiểm chứng các kết quả mô phỏng. Đây là bước
+thiết yếu trước khi đề xuất đưa vào tiêu chuẩn hóa.
+
+\noindent\hrulefill
+
+\vspace{0.5cm}
+Luận văn đã hoàn thành các mục tiêu đặt ra ban đầu và mở ra nhiều hướng
+phát triển có giá trị cho cộng đồng nghiên cứu. Tác giả hy vọng các kết
+quả của Luận văn sẽ là một bước tiến nhỏ góp phần vào sự phát triển của
+mạng vô tuyến thế hệ thứ sáu trong tương lai gần.

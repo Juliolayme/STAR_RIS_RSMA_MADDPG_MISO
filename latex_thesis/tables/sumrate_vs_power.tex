@@ -1,0 +1,23 @@
+\begin{table}[t]
+\centering
+\small
+\caption{Tổng tốc độ trung bình (b/s/Hz) theo $P_{\max}$ (trung bình qua $8$ hạt giống huấn luyện trên locked test bank, $N=32$; pipeline Dynamic-MDP).}
+\label{tab:sumrate_vs_power}
+\setlength{\tabcolsep}{4.5pt}
+\begin{tabular}{cccccc}
+\toprule
+\textbf{$P_{\max}$ (dBm)} & \textbf{MADDPG} & \textbf{TD3-Matched} & \textbf{TD3} & \textbf{DDPG} & \textbf{PPO} \\
+\midrule
+$10$ & $1{,}12$ & $0{,}98$ & $1{,}09$ & $1{,}14$ & $1{,}14$ \\
+$15$ & $1{,}88$ & $1{,}71$ & $1{,}84$ & $1{,}78$ & $1{,}79$ \\
+$20$ & $\mathbf{2{,}79}$ & $2{,}63$ & $2{,}74$ & $2{,}54$ & $2{,}48$ \\
+$25$ & $\mathbf{3{,}73}$ & $3{,}61$ & $3{,}66$ & $3{,}31$ & $3{,}06$ \\
+$30$ & $\mathbf{4{,}52}$ & $4{,}41$ & $4{,}39$ & $3{,}94$ & $3{,}42$ \\
+$35$ & $\mathbf{5{,}03}$ & $4{,}91$ & $4{,}84$ & $4{,}34$ & $3{,}59$ \\
+\bottomrule
+\end{tabular}
+
+\vspace{0.2em}
+{\footnotesize Ghi chú: MADDPG có sum-rate cao nhất về số học trong dải $20$--$35$ dBm, nhưng bám rất sát TD3-Matched và TD3 (chênh lệch trong khoảng nhiễu thống kê; xem Bảng \ref{tab:significance}). Cả ba tận dụng công suất bổ sung tốt; PPO tăng chậm nhất do chính sách bảo thủ ưu tiên QoS.\par}
+\hfill {\footnotesize\itshape Nguồn: Tác giả xây dựng (2026)}
+\end{table}

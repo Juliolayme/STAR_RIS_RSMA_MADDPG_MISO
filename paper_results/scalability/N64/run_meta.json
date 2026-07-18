@@ -1,0 +1,52 @@
+{
+  "algos": [
+    "maddpg",
+    "td3"
+  ],
+  "ckpt_dir": "",
+  "config_sha": "2372b50b46950e8c97e11a87d8168be97fcd779eef7562b3089b8f548abee6ee",
+  "environment": {
+    "cuda_version": "",
+    "gpu_name": "",
+    "hostname": "DESKTOP-2SBG0V9",
+    "numpy_version": "2.2.6",
+    "platform": "Windows-10-10.0.26100-SP0",
+    "python_version": "3.10.11",
+    "source_sha": "b83e69767f2d995ba2d8b15e004d9d0233c08baa6c03b30e321428e6b8944201",
+    "torch_version": "2.12.1+cpu"
+  },
+  "evaluation_source_sha": "b83e69767f2d995ba2d8b15e004d9d0233c08baa6c03b30e321428e6b8944201",
+  "log_dir": "",
+  "run_id": "scal_N64",
+  "source": "verified_shard_manifests",
+  "source_manifests": [
+    "C:\\Users\\ADMIN\\Documents\\STAR_RIS_RSMA_MADDPG_FROZEN_v14-main\\results_revised\\shards\\scalability_cpu_v1_N64\\maddpg_seed1000\\shard_manifest.json",
+    "C:\\Users\\ADMIN\\Documents\\STAR_RIS_RSMA_MADDPG_FROZEN_v14-main\\results_revised\\shards\\scalability_cpu_v1_N64\\maddpg_seed2000\\shard_manifest.json",
+    "C:\\Users\\ADMIN\\Documents\\STAR_RIS_RSMA_MADDPG_FROZEN_v14-main\\results_revised\\shards\\scalability_cpu_v1_N64\\maddpg_seed3000\\shard_manifest.json",
+    "C:\\Users\\ADMIN\\Documents\\STAR_RIS_RSMA_MADDPG_FROZEN_v14-main\\results_revised\\shards\\scalability_cpu_v1_N64\\maddpg_seed4000\\shard_manifest.json",
+    "C:\\Users\\ADMIN\\Documents\\STAR_RIS_RSMA_MADDPG_FROZEN_v14-main\\results_revised\\shards\\scalability_cpu_v1_N64\\maddpg_seed5000\\shard_manifest.json",
+    "C:\\Users\\ADMIN\\Documents\\STAR_RIS_RSMA_MADDPG_FROZEN_v14-main\\results_revised\\shards\\scalability_cpu_v1_N64\\maddpg_seed6000\\shard_manifest.json",
+    "C:\\Users\\ADMIN\\Documents\\STAR_RIS_RSMA_MADDPG_FROZEN_v14-main\\results_revised\\shards\\scalability_cpu_v1_N64\\maddpg_seed7000\\shard_manifest.json",
+    "C:\\Users\\ADMIN\\Documents\\STAR_RIS_RSMA_MADDPG_FROZEN_v14-main\\results_revised\\shards\\scalability_cpu_v1_N64\\maddpg_seed8000\\shard_manifest.json",
+    "C:\\Users\\ADMIN\\Documents\\STAR_RIS_RSMA_MADDPG_FROZEN_v14-main\\results_revised\\shards\\scalability_cpu_v1_N64\\td3_seed1000\\shard_manifest.json",
+    "C:\\Users\\ADMIN\\Documents\\STAR_RIS_RSMA_MADDPG_FROZEN_v14-main\\results_revised\\shards\\scalability_cpu_v1_N64\\td3_seed2000\\shard_manifest.json",
+    "C:\\Users\\ADMIN\\Documents\\STAR_RIS_RSMA_MADDPG_FROZEN_v14-main\\results_revised\\shards\\scalability_cpu_v1_N64\\td3_seed3000\\shard_manifest.json",
+    "C:\\Users\\ADMIN\\Documents\\STAR_RIS_RSMA_MADDPG_FROZEN_v14-main\\results_revised\\shards\\scalability_cpu_v1_N64\\td3_seed4000\\shard_manifest.json",
+    "C:\\Users\\ADMIN\\Documents\\STAR_RIS_RSMA_MADDPG_FROZEN_v14-main\\results_revised\\shards\\scalability_cpu_v1_N64\\td3_seed5000\\shard_manifest.json",
+    "C:\\Users\\ADMIN\\Documents\\STAR_RIS_RSMA_MADDPG_FROZEN_v14-main\\results_revised\\shards\\scalability_cpu_v1_N64\\td3_seed6000\\shard_manifest.json",
+    "C:\\Users\\ADMIN\\Documents\\STAR_RIS_RSMA_MADDPG_FROZEN_v14-main\\results_revised\\shards\\scalability_cpu_v1_N64\\td3_seed7000\\shard_manifest.json",
+    "C:\\Users\\ADMIN\\Documents\\STAR_RIS_RSMA_MADDPG_FROZEN_v14-main\\results_revised\\shards\\scalability_cpu_v1_N64\\td3_seed8000\\shard_manifest.json"
+  ],
+  "source_sha": "b83e69767f2d995ba2d8b15e004d9d0233c08baa6c03b30e321428e6b8944201",
+  "training_seeds": [
+    1000,
+    2000,
+    3000,
+    4000,
+    5000,
+    6000,
+    7000,
+    8000
+  ],
+  "training_source_sha": "b83e69767f2d995ba2d8b15e004d9d0233c08baa6c03b30e321428e6b8944201"
+}

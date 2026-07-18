@@ -1,0 +1,619 @@
+Review CODE V4
+Kết luận
+
+Core DRL và luồng shard đã đủ ổn để chạy pilot/dev. Chưa nên mở full locked-test experiment.
+
+Trạng thái:
+
+Hạng mục	Kết quả
+Compile toàn source	Pass
+Unit/regression tests	85/86 test đã xác nhận pass
+Smoke 5 thuật toán	Pass
+Train-only shard	Pass
+Aggregate-only từ manifest	Pass
+Reward recomputation	Pass
+MADDPG actor gradient	Pass
+PPO rollout consistency	Pass
+AO dùng lambda đăng ký trước	Pass
+Final paper pipeline	Còn blocker
+
+Mình đã chạy smoke gồm:
+
+MADDPG
+DDPG
+TD3
+TD3-Matched
+PPO
+
+với một training seed. Pipeline hoàn tất và thoát bình thường trong khoảng 35 giây.
+
+Mình cũng chạy thực tế:
+
+train-only MADDPG seed 1000
+→ tạo shard manifest
+→ aggregate-only từ shard
+→ tạo bảng, figure và results_raw.csv
+
+Luồng này hoàn tất thành công.
+
+Source CODE V4
+
+Các phần V4 đã sửa tốt
+
+V4 đã xử lý đúng những lỗi lớn của V3:
+
+DEFAULT_ALGOS đã có td3_matched.
+TD3-Matched thuộc primary statistical family.
+Train phân tán theo đúng một cặp algorithm–seed.
+Aggregate scan và xác minh shard manifest, không dựa vào run_meta.json.
+Checkpoint và config được kiểm tra SHA-256.
+AO-Grid và Hybrid AO dùng cùng ao_reference_lambda, không lấy lambda từ MADDPG seed đầu tiên.
+Hybrid AO chọn scenario phân tầng theo từng evaluation seed.
+per_user_rate không còn append hai lần.
+Seed split được tách thành file versioned và kiểm tra hash.
+Raw results có scenario provenance.
+Kết quả cũ được tách khỏi kết quả revised.
+Source ZIP không chứa cache, smoke logs hoặc checkpoint thừa.
+
+Ngoài ra, tại N=32, một lần Hybrid AO mặc định chạy khoảng:
+
+21,0 giây
+186.013 objective evaluations
+
+Nên phần AO cho 5 scenario × 3 block dự kiến mất khoảng vài phút, không phải nhiều giờ.
+
+5 blocker cần sửa trước full experiment
+P0-1. Các shard chưa khóa theo phiên bản source code
+
+Manifest hiện xác minh:
+
+config_sha
+checkpoint_sha
+
+nhưng không có:
+
+source_sha
+git_commit
+
+Điều này cho phép trường hợp nguy hiểm:
+
+MADDPG seed 1000 chạy bằng CODE V4.0
+MADDPG seed 2000 chạy bằng CODE V4.1
+config.yaml giống nhau
+→ aggregate vẫn chấp nhận
+
+Như vậy CI tám seed có thể trộn model từ nhiều implementation khác nhau.
+
+Cách sửa
+
+Trước full run, tạo một trong hai:
+
+git_commit_sha
+
+hoặc deterministic:
+
+source_tree_sha256
+
+Hash ít nhất các file:
+
+*.py
+config/*.yaml
+requirements.txt
+
+Không hash:
+
+results/
+logs/
+checkpoints/
+__pycache__/
+
+Thêm vào:
+
+shard_manifest.json
+completed_runs.csv
+results_raw.csv
+best.pt metadata
+run_meta.json
+
+Aggregate phải từ chối nếu các shard có source_sha khác nhau.
+
+Đây là blocker quan trọng nhất cho distributed experiment.
+
+P0-2. Aggregate-only làm mất toàn bộ training history
+
+Trong shard manifest hiện chưa lưu:
+
+history.csv
+log.csv
+history_sha
+log_sha
+
+Khi aggregate load checkpoint, _rebuild_agent_for_eval() trả:
+
+"history": {"ma_return": []}
+
+Vì vậy:
+
+have_histories = False
+
+và aggregate bỏ qua:
+
+training convergence;
+sum-rate theo episode;
+QoS theo episode;
+lambda curve;
+reward decomposition.
+
+Mình đã kiểm tra output aggregate thực tế: không có các hình training.
+
+Trong khi checklist đang yêu cầu aggregate tạo:
+
+training_convergence
+training_sum_rate
+training_user_qos_fraction
+qos_lambda
+reward_decomposition
+Cách sửa
+
+Mỗi shard manifest phải chứa:
+
+{
+  "history_csv": "logs/.../history.csv",
+  "history_sha": "...",
+  "log_csv": "logs/.../log.csv",
+  "log_sha": "..."
+}
+
+Aggregate phải:
+
+xác minh hash;
+load history của từng seed;
+dựng lại ma trận [n_seeds, n_episodes];
+vẽ CI giữa seed;
+tổng hợp reward decomposition.
+
+Nếu không sửa, bạn có model và bảng cuối nhưng không tạo được các hình hội tụ đúng chuẩn paper.
+
+P0-3. Train-only vẫn tạo locked test ScenarioBank trong bộ nhớ
+
+Thông báo train-only ghi:
+
+Only the validation ScenarioBank may be used; no test bank is built.
+
+Nhưng code:
+
+def _get_validation_bank(cfg):
+    return build_eval_banks(cfg)["validation"]
+
+Trong khi:
+
+build_eval_banks(cfg)
+
+tạo đồng thời:
+
+validation bank
+test bank
+
+Test bank không được dùng để chọn model, nhưng vẫn bị materialize trong mỗi training job. Điều này:
+
+trái với protocol đã ghi;
+tăng bộ nhớ và thời gian;
+tạo đường dẫn vô tình truy cập test trước aggregate;
+làm test isolation không còn chặt.
+Cách sửa
+
+Tạo API riêng:
+
+build_eval_bank(cfg, split="validation")
+
+Trong training:
+
+_get_validation_bank()
+→ chỉ tạo validation
+
+Locked test bank chỉ được tạo trong:
+
+aggregate-only final job
+
+Không được tạo trong:
+
+train-only;
+smoke;
+pilot;
+checkpoint validation.
+P0-4. Aggregate cho phép thiếu thuật toán hoặc thiếu seed
+
+Aggregate hiện kiểm tra:
+
+Các thuật toán được cung cấp phải có cùng tập seed.
+
+Nhưng không kiểm tra tập đó có đầy đủ theo config hay không.
+
+Mình đã thử chỉ với:
+
+1 algorithm
+1 seed
+
+và aggregate vẫn tạo bảng “final” bình thường.
+
+Điều này hữu ích cho pilot, nhưng nguy hiểm với paper. Một job thiếu seed 8000 hoặc thiếu PPO vẫn có thể tạo algorithm_comparison.csv.
+
+Cách sửa
+
+Thêm chế độ nghiêm ngặt:
+
+--final-paper
+
+Hoặc config:
+
+evaluation:
+  required_algorithms:
+    - maddpg
+    - ddpg
+    - td3
+    - td3_matched
+    - ppo
+  required_training_seeds:
+    - 1000
+    - 2000
+    - 3000
+    - 4000
+    - 5000
+    - 6000
+    - 7000
+    - 8000
+
+Trong final mode, aggregate phải fail nếu:
+
+thiếu một algorithm;
+thiếu một seed;
+dư seed ngoài preregistration;
+trùng algorithm–seed;
+source/config SHA không đồng nhất.
+
+Có thể giữ:
+
+--allow-partial
+
+cho smoke và pilot.
+
+P0-5. Hai notebook chưa phù hợp với pipeline V4
+Notebook chính
+
+star_ris_rsma_main.ipynb vẫn gọi:
+
+python main.py --algos maddpg ddpg td3 td3_matched ppo
+
+Nó chạy toàn bộ 40 training run trong một process.
+
+Điều này trái với checklist:
+
+mỗi Kaggle job = một algorithm–seed
+
+và dễ vượt thời lượng session.
+
+Notebook scalability
+
+Notebook đọc config bằng:
+
+yaml.safe_load(...)
+
+rồi ghi config mới vào:
+
+scalability_runs/N16/config_N16.yaml
+
+Nhưng config chứa:
+
+seed_split:
+  path: seed_split.v1.yaml
+
+Đường dẫn này sẽ được resolve tương đối từ scalability_runs/N16/, nơi không có file seed split.
+
+Config generated không chứa các seed list đã resolve vì notebook không dùng main.load_config().
+
+Kết quả: scalability notebook có khả năng dừng bằng:
+
+FileNotFoundError: seed-split source not found
+Cách sửa
+
+Notebook phải dùng:
+
+from main import load_config
+
+base_cfg = load_config("config/config.yaml")
+
+Khi đó seed lists và resolved_sha256 được embed vào effective config.
+
+Notebook chính nên:
+
+sinh danh sách 40 lệnh train-only;
+hoặc chạy đúng một pair do người dùng chọn;
+sau khi thu đủ shard mới chạy aggregate-only.
+
+Notebook scalability cũng cần shard theo:
+
+N × algorithm × seed
+
+không gọi monolithic pipeline cho từng N.
+
+Các vấn đề quan trọng nên sửa
+6. Full pytest chưa hoàn tất ổn định trong môi trường review
+
+Source có 86 test.
+
+Mình xác nhận:
+
+85 test pass
+
+Test còn lại:
+
+test_load_run_dir_reevaluates_without_training
+
+hoạt động khi chạy hai bước standalone:
+
+train run
+load-run-dir evaluate
+
+nhưng bị quá chậm hoặc treo khi chạy bên trong toàn bộ pytest ở môi trường:
+
+Python 3.13
+pytest 9
+
+Source của bạn pin:
+
+Python 3.10
+pytest 8.3.4
+
+nên có thể là khác biệt môi trường/plugin. Tuy nhiên integration test hiện đang chạy luôn:
+
+power sweep;
+ablation;
+diagnostics;
+latency 2.000 calls;
+report generation;
+
+hai lần.
+
+Đây là quá nặng cho một test chỉ nhằm kiểm tra load-run-dir.
+
+Cách sửa
+
+Thêm config:
+
+evaluation:
+  latency_num_calls: 2000
+  latency_warmup_calls: 50
+
+Trong test đặt:
+
+latency_num_calls: 5
+latency_warmup_calls: 1
+
+Hoặc thêm:
+
+--skip-latency
+--skip-diagnostics
+
+cho integration tests.
+
+Trước full run trên Kaggle, yêu cầu bắt buộc:
+
+pytest tests -q
+
+phải thực sự return exit code 0 trong đúng môi trường target.
+
+7. Hybrid AO mặc định chưa hội tụ ở benchmark N=32
+
+Một solve development scenario cho kết quả:
+
+converged = False
+n_evals = 186.013
+sum_rate ≈ 12,22 b/s/Hz
+per-user rates ≈ [0,244; 11,486; 0,244; 0,244]
+
+Điều này không phải lỗi vì AO được gọi đúng là local-search penalty reference. Tuy nhiên nó cho thấy:
+
+objective ưu tiên sum-rate mạnh;
+ba user không đạt R
+min
+	​
+
+=0,3;
+convergence flag có thể thấp;
+đây không phải solver constrained của P0.
+
+Trước khi mở locked test, nên dùng validation scenarios để quyết định cố định:
+
+max_outer;
+tol;
+số start;
+số projected-gradient step.
+
+Sau đó khóa solver config. Không chỉnh sau khi xem test.
+
+Cần log thêm:
+
+solve_time_ms
+wall_time_ms
+
+Hiện Hybrid AO lưu n_evals nhưng chưa lưu thời gian thực. Đây là dữ liệu quan trọng cho claim latency.
+
+8. Manifest chưa lưu môi trường chạy
+
+Nên bổ sung:
+
+python_version
+torch_version
+numpy_version
+cuda_version
+gpu_name
+hostname hoặc platform
+source_sha
+
+Không cần bắt buộc mọi shard dùng cùng GPU, nhưng paper phải biết shard nào chạy bằng môi trường nào.
+
+9. --drop-replay-after-train làm metadata resumable sai
+
+Manifest MADDPG đặt:
+
+"resumable_training": true
+
+Nếu dùng:
+
+--drop-replay-after-train
+
+replay sidecar bị xóa nhưng manifest vẫn nói có thể resume.
+
+Sau khi xóa replay, phải cập nhật:
+
+"resumable_training": false
+
+hoặc:
+
+"replay_archived": true
+10. Cần khóa tolerance và feasibility trước full
+
+Config hiện dùng:
+
+model_select_constraint_tolerance: 0.0
+
+Giá trị này hợp lệ nhưng khá nghiêm với validation hữu hạn.
+
+Bạn cần quyết định bằng validation trước full:
+
+0.0
+hoặc
+0.01 b/s/Hz
+
+Sau đó không đổi nữa.
+
+Checklist còn yêu cầu feasibility analysis của R
+min
+	​
+
+=0,3, nhưng source chưa có solver max–min chuyên dụng. Nên chạy feasibility trên development/validation trước khi tốn chi phí 40 full training run.
+
+Quyết định GO/NO-GO
+GO
+
+Bạn có thể chạy:
+
+smoke;
+development pilot;
+từng train-only shard trên development config;
+thử quy trình upload/download shard;
+validation-only hyperparameter selection;
+benchmark AO trên validation.
+NO-GO
+
+Chưa nên:
+
+chạy 40 shard chính thức;
+tạo locked test ScenarioBank;
+mở kết quả final test;
+chạy scalability notebook hiện tại;
+dùng aggregate output làm số liệu Chương 4.
+Prompt gửi Claude Code
+CODE V4 core algorithms and shard execution work, but fix these final
+experiment-integrity blockers before the full paper run.
+
+1. Add source-code provenance to every shard.
+
+   Compute a deterministic source_tree_sha256 or use a Git commit SHA.
+   Include it in:
+       shard_manifest.json
+       completed_runs.csv
+       run_meta.json
+       results_raw.csv
+       inference checkpoint metadata
+
+   Aggregate-only must reject shards with different source SHAs even when
+   config_sha is identical.
+
+2. Preserve training histories in distributed aggregation.
+
+   Each shard manifest must include and hash:
+       history_csv
+       log_csv
+
+   Aggregate-only must load these files and regenerate:
+       training convergence
+       training sum-rate
+       training QoS
+       lambda curves
+       reward decomposition
+
+   Currently rebuilt agents have empty histories, so aggregate-only silently
+   omits all convergence figures.
+
+3. Enforce strict locked-test isolation.
+
+   _get_validation_bank currently calls build_eval_banks(), which constructs
+   both validation and locked-test banks. Add a split-specific builder so a
+   train-only job materializes validation scenarios only. The locked test bank
+   may be constructed only by the final aggregate-only job.
+
+4. Add a strict final-paper completeness check.
+
+   In final mode require the exact pre-registered matrix:
+       algorithms = maddpg, ddpg, td3, td3_matched, ppo
+       seeds = 1000..8000
+
+   Reject missing, extra or duplicate algorithm-seed pairs.
+   Keep an explicit --allow-partial mode for smoke and pilot aggregation.
+
+5. Update both notebooks.
+
+   The main notebook must use train-only shards and a separate aggregate-only
+   step instead of one monolithic 40-run process.
+
+   The scalability notebook currently writes configs into subdirectories while
+   retaining the relative seed_split.v1.yaml path. It will fail to resolve the
+   seed split. Use main.load_config() so resolved seed lists/hash are embedded,
+   and use N/algorithm/seed shards followed by aggregation.
+
+6. Make integration tests benchmark-light.
+
+   Add configurable latency_num_calls and latency_warmup_calls, or skip
+   latency/diagnostics in test_load_run_dir. The load-run functionality works
+   standalone, but the full pytest suite is not completing reliably in the
+   review environment because this test runs the full evaluation pipeline
+   twice.
+
+7. Log Hybrid AO wall-clock time per solve/scenario and include it in the AO
+   CSV. Freeze AO hyperparameters using validation data only before opening the
+   locked test bank.
+
+8. Add Python/Torch/CUDA/GPU metadata to shard manifests.
+
+9. If --drop-replay-after-train removes the MADDPG replay sidecar, update the
+   manifest so resumable_training is false.
+
+10. Pre-register model_select_constraint_tolerance and run a validation-only
+    feasibility study for R_min before the full 40-shard experiment.
+
+After these fixes run in the exact target environment:
+
+    pytest tests -q
+
+    python main.py --config config/smoke.yaml \
+        --algos maddpg ddpg td3 td3_matched ppo
+
+Then test:
+
+    one train-only shard per algorithm
+    aggregate-only over the five shards
+    verify convergence figures are present
+    verify source/config/checkpoint hashes
+    verify no locked-test ScenarioBank is created during train-only
+
+Only after all checks pass should the final 5 algorithms x 8 seeds run begin.
+Đánh giá cuối
+Core MADDPG/DRL correctness:       GO
+Train-only execution:             GO
+Manifest checkpoint verification: GO
+Aggregate physical results:       GO
+Aggregate training curves:        FAIL
+Locked-test isolation:            FAIL
+Notebook full-run workflow:       FAIL
+Cross-shard source provenance:     FAIL

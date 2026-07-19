@@ -43,7 +43,7 @@ suy ra từ ràng buộc bảo toàn năng lượng).
 \subsection{Lý do phân rã thành ba tác tử chuyên dụng}
 
 So với cách triển khai một tác tử duy nhất với không gian hành động hợp
-nhất 105 chiều, hoặc cách triển khai $N$ tác tử (mỗi phần tử RIS một tác
+nhất 140 chiều, hoặc cách triển khai $N$ tác tử (mỗi phần tử RIS một tác
 tử), khuôn khổ ba tác tử chuyên dụng có ba ưu điểm
 \cite{lowe2017multi}, \cite{dange2026collaborative}, \cite{mirza2024multi}:
 
@@ -52,7 +52,7 @@ lỗi. Tác tử BS chỉ tập trung vào tài nguyên thời gian-công suất
 tử STAR-RIS chỉ tập trung vào tài nguyên không gian (pha-biên độ).
 
 \textbf{(ii) Không gian hành động của mỗi tác tử nhỏ vừa phải,} dễ huấn
-luyện hơn so với một tác tử 105 chiều. Đồng thời, số tác tử vừa đủ
+luyện hơn so với một tác tử 140 chiều. Đồng thời, số tác tử vừa đủ
 (3) để Critic tập trung không gặp vấn đề chiều cao.
 
 \textbf{(iii) Tách biệt được thông tin quan sát.} Tác tử BS không cần
@@ -95,7 +95,7 @@ giúp tránh saturation tanh ở giai đoạn đầu huấn luyện.
 \subsection{Mạng Critic tập trung}
 
 Mỗi tác tử $i \in \{0, 1, 2\}$ có một mạng Critic riêng
-$Q_i: \R^{550} \times \R^{105} \to \R$ nhận vào toàn bộ quan sát ghép
+$Q_i: \R^{681} \times \R^{140} \to \R$ nhận vào toàn bộ quan sát ghép
 $(o_0, o_1, o_2)$ và toàn bộ hành động ghép $(a_0, a_1, a_2)$:
 \begin{equation}
 Q_i(\mathbf{o}, \mathbf{a}; \phi_i) =
@@ -104,7 +104,7 @@ W^{(3)}_i\,\sigma(\mathrm{LN}(W^{(2)}_i\,
 + b^{(3)}_i.
 \label{eq:critic_nn}
 \end{equation}
-Kích thước mỗi Critic: $655 \to 256 \to 256 \to 1$, không có activation
+Kích thước mỗi Critic: $821 \to 256 \to 256 \to 1$, không có activation
 cuối (Q-value là giá trị thực không bị giới hạn).
 
 \textbf{Tại sao dùng ba Critic riêng dù phần thưởng chung?} Trong khuôn
@@ -144,60 +144,26 @@ mạng mục tiêu thay đổi chậm hơn rất nhiều so với mạng học, 
 trường ``ổn định ngắn hạn'' để Critic hội tụ.
 
 % -----------------------------------------------------------------------------
-\section{Tham số hóa pha residual}
+\section{Ánh xạ pha STAR-RIS và ablation residual}
 \label{sec:residual_phase}
 
-\subsection{Động lực và ý tưởng}
-
-Pha STAR-RIS $\theta_n^X \in [0, 2\pi)$ là biến tuần hoàn, không gian
-khám phá rộng ($N=32$ pha, mỗi pha $2\pi$ rad). Nếu tác tử phải học
-trực tiếp các giá trị pha tuyệt đối từ $\theta_n^X = 0$, tốc độ
-hội tụ rất chậm vì xác suất ngẫu nhiên trùng vào vùng pha hợp lý ban đầu
-là $O(1/(2\pi)^N) \approx 10^{-26}$ với $N=32$, gần như không xảy ra.
-
-Để giải quyết, Luận văn đề xuất tham số hóa pha residual: thay vì
-học pha tuyệt đối, tác tử học phần lệch (residual) so với một
-tiên nghiệm phân tích bậc một (analytical prior). Tiên nghiệm này
-là nghiệm xấp xỉ thu được từ điều kiện căn pha đồng pha cho người dùng
-yếu nhất, có dạng giải tích.
-
-\subsection{Nghiệm phân tích bậc một (Analytical Prior)}
-
-Xét bài toán phụ: cho phép biên độ $\beta_n^X = 1/\sqrt{2}$ cố định, tìm
-pha $\{\theta_n^X\}$ để cực đại $|h_{\text{eff},k_w^X}|$, với $k_w^X$ là
-người dùng yếu nhất trong vùng $X$ (xác định bởi
-$\arg\min_k \|\mathbf{h}_{r,k}^X\|^2$). Bài toán này có nghiệm dạng đóng
-\cite{wu2020smart}, \cite{mu2022simultaneously}:
+Trong cấu hình chính đã đăng ký trước, đầu ra Actor pha $a_n^X\in[-1,1]$
+được ánh xạ tuyệt đối theo
 \begin{equation}
-\theta_n^{\text{prior},X} \;=\; \arg(h_{d,k_w^X})
-                              \;-\; \arg\!\big[(\mathbf{h}_{r,k_w^X}^X)_n^*\,(\mathbf{G})_n\big],
-\label{eq:phase_prior}
+  \theta_n^X = \pi(a_n^X+1) \pmod{2\pi}, \qquad X\in\{R,T\}.
 \end{equation}
-giúp các thành phần đường trực tiếp và đường gián tiếp cộng đồng pha tại
-người dùng yếu nhất, tối đa hóa $|h_{\text{eff},k_w^X}|$.
-
-\subsection{Công thức residual}
-
-Tác tử pha học một phần dư $\Delta\phi_n^X \in [-1, 1]$ (đầu ra
-tanh của mạng Actor) và pha thực được tạo theo công thức:
+Cách ánh xạ này không phụ thuộc baseline giải tích và là cấu hình duy nhất
+được dùng cho ma trận kết quả chính. Một biến thể residual có thể được khảo
+sát riêng:
 \begin{equation}
-\boxed{
-\theta_n^X \;=\; \theta_n^{\text{prior},X} \;+\; \frac{\pi}{4}\,\Delta\phi_n^X
-}
-\label{eq:residual_final}
+  \theta_n^X = \big[\theta_{n,\mathrm{prior}}^X
+  + \rho_{\phi}\pi a_n^X\big]_{2\pi}.
 \end{equation}
-Hệ số $\pi/4$ giới hạn phần dư trong $[-\pi/4, +\pi/4]$, tức $\pm 45^\circ$
-quanh nghiệm phân tích. Không gian khám phá hữu hiệu của tác tử do đó
-chỉ còn $(\pi/2)^N$ thay vì $(2\pi)^N$, giảm $4^N \approx 1{,}8 \times
-10^{19}$ lần với $N=32$. Đồng thời, ngay từ bước đầu tiên (khi tác tử
-chưa học gì), pha $\theta_n^X = \theta_n^{\text{prior},X}$ đã là một
-lời giải hợp lý phần nào, cung cấp phần thưởng khởi đầu khác không cho
-học. Biên độ residual $\pm\pi/4$ được lựa chọn qua khảo sát thực
-nghiệm: biên rộng hơn ($\pm\pi/2$) khiến chính sách lệch xa nghiệm
-phân tích và làm giảm sum-rate, trong khi biên hẹp hơn hạn chế khả
-năng hiệu chỉnh đa người dùng của tác tử.
+Prior phải được tính nhất quán từ phương trình tín hiệu thu MISO. Biến thể
+residual là một ablation tùy chọn; mọi lựa chọn $\rho_{\phi}$ phải được khóa
+bằng validation trước khi mở test bank và không được trình bày như đóng góp
+thực nghiệm của cấu hình absolute.
 
-% -----------------------------------------------------------------------------
 \section{Hàm phần thưởng Lagrangian surrogate và cập nhật đối ngẫu per-user}
 \label{sec:adaptive_reward}
 
@@ -557,7 +523,7 @@ Output activation Actor             & tanh \\
 Gradient clip (norm)                & $1{,}0$ \\
 Nhiễu OU $\sigma_0 \to \sigma_f$    & $0{,}4 \to 0{,}05$ \\
 Số bước decay nhiễu                 & $45\,000$ (episode $\approx 900$) \\
-Biên độ residual pha                & $\pm\pi/4$ \\
+Ánh xạ pha cấu hình chính          & Pha tuyệt đối, $	heta_n=\pi(a_n+1)$ \\
 $\lambda_k$ ban đầu                 & $1{,}0$ (mỗi người dùng) \\
 Miền chiếu $\lambda_k$              & $[0,\, 20]$ \\
 Tốc độ học đối ngẫu $\eta_{\lambda}$ & $0{,}01$ (EMA $0{,}9$) \\
@@ -577,9 +543,9 @@ Reward clip                         & $[-50,\, +50]$ \\
 \subsection{Độ phức tạp huấn luyện}
 
 Mỗi bước cập nhật yêu cầu một lần chạy tiến/ngược qua các Actor và Critic.
-Với 3 tác tử và Critic kích thước $655 \to 256 \to 256 \to 1$:
+Với 3 tác tử và Critic kích thước $821 \to 256 \to 256 \to 1$:
 \begin{equation}
-\mathcal{C}_{\text{train,step}} = O\!\big(3 \times (256^2 + 256 \times 655)\big)
+\mathcal{C}_{\text{train,step}} = O\!\big(3 \times (256^2 + 256 \times 821)\big)
                                 = O(10^5)\ \text{ops}.
 \end{equation}
 Tổng cộng $100\,000$ bước cập nhật mỗi hạt giống cho thấy chi phí huấn
@@ -610,7 +576,7 @@ thức dùng cặp bảng CPU/GPU mới.
 
 Chương 3 đã trình bày chi tiết khuôn khổ MADDPG-CTDE ba tác tử chuyên
 dụng để giải bài toán surrogate của P0. Ba cải tiến quan trọng được đề
-xuất: (i) tham số hóa pha residual giúp giảm không gian khám phá pha
+xuất: (i) ánh xạ pha tuyệt đối nhất quán với cấu hình đã khóa
 $4^N$ lần và cung cấp một điểm khởi đầu hợp lý; (ii) hàm phần thưởng
 Lagrangian surrogate với các biến đối ngẫu $\lambda_k$ per-user cập
 nhật bằng projected dual gradient trên khe hở ràng buộc có dấu, tự điều

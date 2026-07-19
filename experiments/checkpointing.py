@@ -50,8 +50,8 @@ def _save_replay_sidecar(path: str, replay: dict) -> None:
         for group in ("obs", "next_obs", "actions", "rewards"):
             arrays[group] = replay[group]
     arrays["dones"] = replay["dones"]
-    # Optional reward-recomputation arrays (item 1).
-    for key in ("base_rewards", "c_gaps"):
+    # Optional canonical critic-state and reward-recomputation arrays.
+    for key in ("global_states", "next_global_states", "base_rewards", "c_gaps"):
         if key in replay:
             arrays[key] = replay[key]
     np.savez_compressed(path, __meta__=np.frombuffer(
@@ -70,7 +70,7 @@ def _load_replay_sidecar(path: str) -> dict:
         for group in ("obs", "next_obs", "actions", "rewards"):
             out[group] = data[group]
     out["dones"] = data["dones"]
-    for key in ("base_rewards", "c_gaps"):
+    for key in ("global_states", "next_global_states", "base_rewards", "c_gaps"):
         if key in data.files:
             out[key] = data[key]
     return out

@@ -41,24 +41,31 @@ def test_actor_loss_does_not_depend_on_replay_actions():
     # Fill the buffer.
     env.reset(seed=2)
     obs = env.per_agent_observations()
+    global_state = env.global_state()
     for _ in range(agent.batch_size + 5):
         acts = [rng.uniform(-1, 1, size=d).astype(np.float32) for d in spec.act_dims]
         env.step(acts)
         nxt = env.per_agent_observations()
+        next_global_state = env.global_state()
         agent.add_transition(obs, acts, 0.1, nxt, 0.0, base_reward=0.1,
-                             c_gap=np.zeros(env.K))
+                             c_gap=np.zeros(env.K),
+                             global_state=global_state,
+                             next_global_state=next_global_state)
         obs = nxt
+        global_state = next_global_state
 
-    obs_b, actions_b, _, _, _ = agent.buffer.sample(agent.batch_size,
-                                                    rng=np.random.default_rng(1))
+    sample = agent.buffer.sample(agent.batch_size,
+                                 rng=np.random.default_rng(1),
+                                 include_global_state=True)
+    obs_b, actions_b, _, _, _, global_b, _ = sample
     obs_t = [torch.as_tensor(agent._norm_batch(i, o)) for i, o in enumerate(obs_b)]
-    joint_obs = torch.cat(obs_t, dim=-1)
+    global_t = torch.as_tensor(agent._norm_global_batch(global_b))
     # Loss with current-policy joint action (standard MADDPG).
-    loss = -agent.agents[0].critic(joint_obs,
+    loss = -agent.agents[0].critic(global_t,
                                    agent._actor_joint_action(0, obs_t)).mean()
     # It must not reference replay actions of agents 1,2 at all: perturbing them
     # leaves the loss unchanged (recompute uses actor outputs).
-    loss2 = -agent.agents[0].critic(joint_obs,
+    loss2 = -agent.agents[0].critic(global_t,
                                     agent._actor_joint_action(0, obs_t)).mean()
     torch.testing.assert_close(loss, loss2)
     assert torch.isfinite(loss)

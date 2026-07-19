@@ -16,6 +16,7 @@ def _to_t(x, device, dtype=torch.float32):
 
 
 class _RolloutBuffer:
+    """On-policy rollout with separate bootstrap and episode-boundary masks."""
     def __init__(self, capacity: int, obs_dim: int, act_dim: int):
         self.cap = capacity
         self.obs = np.zeros((capacity, obs_dim), dtype=np.float32)
@@ -23,12 +24,14 @@ class _RolloutBuffer:
         self.log_probs = np.zeros(capacity, dtype=np.float32)
         self.rewards = np.zeros(capacity, dtype=np.float32)
         self.values = np.zeros(capacity, dtype=np.float32)
-        self.dones = np.zeros(capacity, dtype=np.float32)
+        self.next_values = np.zeros(capacity, dtype=np.float32)
+        self.terminated = np.zeros(capacity, dtype=np.float32)
+        self.episode_ends = np.zeros(capacity, dtype=np.float32)
         self.adv = np.zeros(capacity, dtype=np.float32)
         self.ret = np.zeros(capacity, dtype=np.float32)
         self.size = 0
 
-    def add(self, o, a, lp, r, v, d):
+    def add(self, o, a, lp, r, v, terminated, episode_end, next_value):
         i = self.size
         assert i < self.cap, "Rollout buffer overflow."
         self.obs[i] = o
@@ -36,25 +39,29 @@ class _RolloutBuffer:
         self.log_probs[i] = lp
         self.rewards[i] = r
         self.values[i] = v
-        self.dones[i] = float(d)
+        self.next_values[i] = float(next_value)
+        self.terminated[i] = float(terminated)
+        self.episode_ends[i] = float(episode_end)
         self.size += 1
 
     def reset(self):
         self.size = 0
 
-    def compute_gae(self, last_value: float, gamma: float, lam: float):
+    def compute_gae(self, gamma: float, lam: float):
+        """Bootstrap at time limits, but never recurse across a reset."""
         adv = 0.0
         for t in reversed(range(self.size)):
-            next_v = last_value if t == self.size - 1 else self.values[t + 1]
-            next_nonterm = 1.0 - self.dones[t]
-            delta = self.rewards[t] + gamma * next_v * next_nonterm - self.values[t]
-            adv = delta + gamma * lam * next_nonterm * adv
+            bootstrap_mask = 1.0 - self.terminated[t]
+            continuation_mask = 1.0 - self.episode_ends[t]
+            delta = (self.rewards[t]
+                     + gamma * self.next_values[t] * bootstrap_mask
+                     - self.values[t])
+            adv = delta + gamma * lam * continuation_mask * adv
             self.adv[t] = adv
         self.ret[:self.size] = self.adv[:self.size] + self.values[:self.size]
 
     def get(self):
         n = self.size
-        # Advantage normalization (zero-mean, unit-var) — standard PPO trick.
         adv = self.adv[:n]
         adv = (adv - adv.mean()) / (adv.std() + 1e-8)
         return {
@@ -138,13 +145,11 @@ class PPOAgent:
         value = self.critic(obs_t).cpu().numpy()[0]
         return squashed.cpu().numpy()[0].astype(np.float32), float(log_prob.item()), float(value)
 
-    def store(self, norm_obs, a, lp, r, v, d):
-        """Store the NORMALIZED observation actually used at collection time.
-
-        The caller passes `agent.last_norm_obs` (not the raw observation) so the
-        rollout is trained on the exact vectors that produced old_log_prob/value.
-        """
-        self.rollout.add(norm_obs, a, lp, r, v, d)
+    def store(self, norm_obs, a, lp, r, v, *, terminated: bool,
+              episode_end: bool, next_value: float):
+        """Store exact behavior input and explicit boundary semantics."""
+        self.rollout.add(norm_obs, a, lp, r, v, terminated,
+                         episode_end, next_value)
 
     def buffer_full(self) -> bool:
         return self.rollout.size >= self.rollout_length
@@ -167,10 +172,10 @@ class PPOAgent:
         new_lp, _ = self.actor.log_prob(obs_t, act_t)
         return self.rollout.log_probs[:n].copy(), new_lp.cpu().numpy()
 
-    def learn(self, last_value: float) -> dict:
+    def learn(self, last_value: float | None = None) -> dict:
         if self.rollout.size == 0:
             return {}
-        self.rollout.compute_gae(last_value, self.gamma, self.lam)
+        self.rollout.compute_gae(self.gamma, self.lam)
         data = self.rollout.get()
         # Rollout already holds NORMALIZED observations -- do NOT re-normalize.
         obs_t = _to_t(data["obs"], self.device)

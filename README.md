@@ -30,6 +30,16 @@ Kết luận hiện tại nên viết thận trọng:
 - Common-rate split dùng inverse-tanh logits trước softmax để có thể đi sát
   biên simplex.
 - Golden regression fixture đã được regenerate cho MISO (`M=4`).
+- Analytical phase prior is derived directly from `h_d^H q + g^H Phi G q` and covered by a nonzero-direct-link oracle.
+- MADDPG critics use one canonical global state; overlapping local observations are not concatenated.
+- PPO uses distinct terminal/bootstrap and episode-boundary masks in GAE.
+- Primary paper config uses `phase_action_mode: absolute`; residual phase is an optional ablation until separately validated.
+
+## MISO/Q1 compatibility note
+
+The canonical MADDPG critic state and replay schema changed in this hardening pass.
+Old MADDPG checkpoints are not compatible and must not be mixed with new shards.
+See [`MISO_Q1_FIXES.md`](MISO_Q1_FIXES.md) for the fixes and validation gates.
 
 ## Chạy nhanh
 

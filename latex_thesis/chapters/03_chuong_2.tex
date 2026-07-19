@@ -80,7 +80,7 @@ Chương 4.
 \toprule
 \textbf{Tham số} & \textbf{Giá trị} \\
 \midrule
-Số anten BS                                   & $M=1$ \\
+Số anten BS                                   & $M=4$ \\
 Số phần tử STAR-RIS                           & $N=32$ \\
 Số người dùng tổng                            & $K=4$ \\
 Số người dùng vùng phản xạ                    & $K_R=3$ \\
@@ -229,31 +229,30 @@ hơn cho mạng nơ-ron.
   \label{fig:h2_3}
 \end{figure}
 
-\subsection{Kênh hiệu dụng SISO tương đương}
+\subsection{Kênh hiệu dụng MISO}
 
-Bằng cách gộp đường trực tiếp và đường gián tiếp qua STAR-RIS, ta thu
-được kênh hiệu dụng SISO tương đương giữa BS và người dùng $k$
-\cite{mao2022rsma}, \cite{hua2023learning}:
+Với $\mathbf{h}_{d,k}\in\mathbb{C}^{M}$, $\mathbf{G}\in
+\mathbb{C}^{N\times M}$ và $\mathbf{g}_{k}^{X}\in\mathbb{C}^{N}$,
+vector kênh hiệu dụng được lưu theo quy ước
 \begin{equation}
-  h_{\text{eff},k} \;=\; h_{d,k} + \big(\mathbf{h}_{r,k}^X\big)^{\!H}\,
-  \boldsymbol{\Phi}_X\,\mathbf{G}, \quad X \in \{R, T\},
+  \mathbf{h}_{\mathrm{eff},k}
+  = \mathbf{h}_{d,k}+\mathbf{G}^{H}\boldsymbol{\Phi}_{X}^{H}
+    \mathbf{g}_{k}^{X}, \qquad X\in\{R,T\},
   \label{eq:heff}
 \end{equation}
-hay tương đương dưới dạng tổng phần tử:
+sao cho với mọi vector tiền mã hóa $\mathbf{w}\in\mathbb{C}^{M}$,
 \begin{equation}
-  h_{\text{eff},k} \;=\; h_{d,k} + \sum_{n=1}^{N} \sqrt{\beta_n^X}\,
-  e^{j\theta_n^X}\, \big(\mathbf{h}_{r,k}^X\big)_n^*\,(\mathbf{G})_n.
-  \label{eq:heff_sum}
+  \mathbf{h}_{\mathrm{eff},k}^{H}\mathbf{w}
+  = \mathbf{h}_{d,k}^{H}\mathbf{w}
+  + (\mathbf{g}_{k}^{X})^{H}\boldsymbol{\Phi}_{X}\mathbf{G}\mathbf{w}.
+  \label{eq:heff_scalar}
 \end{equation}
-Hệ thức \eqref{eq:heff_sum} cho thấy rõ vai trò của STAR-RIS: bằng việc
-chọn $\theta_n^X$ thích hợp, các pha của thành phần
-$(\mathbf{h}_{r,k}^X)_n^*(\mathbf{G})_n$ có thể được căn chỉnh đồng
-pha với $h_{d,k}$ để tối đa $|h_{\text{eff},k}|^2$. Khi $\theta_n^X$ được
-chọn lý tưởng, độ lợi công suất kênh hiệu dụng tỷ lệ với $N^2$, nghĩa là
-gấp đôi số phần tử RIS sẽ làm tăng độ lợi gấp bốn, một trong
-những lý do khiến RIS được coi là công nghệ then chốt cho 6G.
+Quy ước này được kiểm chứng bằng oracle tín hiệu thu độc lập trong bộ kiểm
+thử. Nghiệm căn pha giải tích sử dụng trực tiếp
+$\mathbf{h}_{d,k}^{H}\mathbf{q}$ và
+$g_{k,n}^{*}(\mathbf{G}_{n,:}\mathbf{q})$, tránh sai dấu liên hợp khi
+đường trực tiếp có pha khác không.
 
-% -----------------------------------------------------------------------------
 \section{Mô hình tín hiệu RSMA, SINR và tốc độ đạt được}
 \label{sec:rsma_signal}
 
@@ -408,7 +407,7 @@ chọn hướng tiếp cận học tăng cường sâu để giải bài toán P
 Để áp dụng DRL/MADDPG, bài toán P0 cần được ánh xạ sang một MDP với bộ năm
 $(\mathcal{S}, \mathcal{A}, \mathcal{P}, \mathcal{R}, \gamma)$ phù hợp với
 cơ chế ba tác tử chuyên dụng. Hình \ref{fig:h2_5} tóm lược ánh xạ MDP,
-trong đó không gian trạng thái 1051 chiều được phân thành ba phần tương
+trong đó trạng thái tập trung 681 chiều được dùng cho Critic, trong khi ba quan sát cục bộ được phân thành ba phần tương
 ứng quan sát cục bộ của từng tác tử, không gian hành động 140 chiều bao
 gồm công suất, biên độ, pha và tỷ lệ tách, còn hàm phần thưởng là
 Lagrangian surrogate giữa sum-rate và mức đáp ứng QoS. Bố cục chi tiết
@@ -417,21 +416,19 @@ của quan sát/hành động được sinh tự động từ mã nguồn qua
 (file \texttt{observation\_schema.json}), bảo đảm mô tả dưới đây khớp
 tuyệt đối với cài đặt.
 
-% LUU Y: hinh h2_5/h2_6 can ve lai theo so chieu MISO moi (1051/1191) sau refactor.
+% LUU Y: hinh h2_5/h2_6 can ve lai theo so chieu MISO moi (681/821) sau refactor.
 \begin{figure}[t]
   \centering
   \includegraphics[width=0.96\linewidth]{figures/h2_5_mdp_anh_xa.png}
-  \caption{Ánh xạ bài toán P0 sang MDP: không gian trạng thái 1051 chiều
-  (tổng quan sát cục bộ ba tác tử), không gian hành động 140 chiều,
+  \caption{Ánh xạ bài toán P0 sang MDP: trạng thái tập trung 681 chiều
+  (mỗi đặc trưng vật lý xuất hiện đúng một lần), không gian hành động 140 chiều,
   hàm phần thưởng Lagrangian surrogate với cập nhật đối ngẫu per-user.}
   \label{fig:h2_5}
 \end{figure}
 
 \subsection{Không gian trạng thái}
 
-Trạng thái tổng thể $s_t$ là phép hợp các quan sát cục bộ của ba tác tử
-$s_t = (o_{0,t}, o_{1,t}, o_{2,t})$, với tổng số chiều
-$73 + 577 + 401 = 1051$ (cấu hình chuẩn $M=4$, $K=4$, $K_R=3$, $N=32$).
+Critic tập trung nhận trạng thái toàn cục $s_t\in\mathbb{R}^{681}$, trong đó mỗi đặc trưng vật lý chỉ xuất hiện một lần. Ba Actor vẫn nhận các quan sát cục bộ có kích thước lần lượt $73$, $577$ và $401$ (cấu hình chuẩn $M=4$, $K=4$, $K_R=3$, $N=32$).
 Mỗi quan sát cục bộ bắt đầu bằng khối chung 41 chiều: phần thực và phần
 ảo của kênh hiệu dụng $\mathbf{h}_{\text{eff},k}$ (32), vector trọng số
 công suất ở bước trước (5) và tỷ lệ tách common-rate ở bước trước (4).
@@ -543,7 +540,7 @@ kiến trúc mạng và quy trình huấn luyện sẽ được trình bày tron
   \includegraphics[width=0.96\linewidth]{figures/h2_6_3agents.png}
   \caption{Phân rã ba tác tử chuyên dụng: BS Power Agent ($26 \to 9$),
   RIS-R Agent ($344 \to 64$), RIS-T Agent ($180 \to 32$), và Critic tập
-  trung với đầu vào $550 + 105 = 655$ chiều.}
+  trung với đầu vào $681 + 140 = 821$ chiều.}
   \label{fig:h2_6}
 \end{figure}
 
@@ -596,6 +593,6 @@ RSMA với SINR và tốc độ. Bài toán tối ưu phân bổ tài nguyên P0
 \eqref{eq:P0} được phát biểu với hàm mục tiêu max $R_{\text{sum}}$ và sáu
 nhóm ràng buộc, đặc biệt bổ sung ràng buộc QoS trên từng người dùng.
 Sau đó bài toán được ánh xạ sang MDP với ba tác tử chuyên dụng, không gian
-trạng thái 550 chiều, không gian hành động 105 chiều và hàm phần thưởng
+trạng thái tập trung 681 chiều, không gian hành động 140 chiều và hàm phần thưởng
 Lagrangian thích nghi. Chương 3 sẽ trình bày thiết kế chi tiết của khuôn
 khổ MADDPG để giải MDP này.

@@ -86,3 +86,40 @@ def test_common_split_can_approach_simplex_boundary():
     split = env._decode_action(actions)["common_split"]
     assert split[0] > 0.999
     assert split[1:].sum() < 0.001
+
+def test_analytical_phase_aligns_nonzero_direct_received_signal():
+    cfg = _cfg()
+    cfg.update({
+        "num_bs_antennas": 2,
+        "num_users": 1,
+        "num_users_reflection": 1,
+        "num_ris_elements": 3,
+        "direct_block_T": False,
+    })
+    env = StarRisRsmaEnv(cfg, seed=41)
+    env.reset(seed=42)
+    env._h_d = np.array([[0.7 + 0.8j, -0.25 + 0.35j]], dtype=np.complex128)
+    env._G = np.array([
+        [0.4 - 0.6j, -0.2 + 0.9j],
+        [0.1 + 0.8j, 0.7 - 0.3j],
+        [-0.5 + 0.2j, 0.6 + 0.4j],
+    ], dtype=np.complex128)
+    env._g = np.array([[0.8 + 0.1j, -0.3 + 0.6j, 0.4 - 0.7j]],
+                      dtype=np.complex128)
+
+    phi_r, _ = env._analytical_phases()
+    q = np.ones(env.M, dtype=np.complex128) / np.sqrt(env.M)
+    direct = np.vdot(env._h_d[0], q)
+    terms = np.conj(env._g[0]) * np.exp(1j * phi_r) * (env._G @ q)
+    aligned = terms * np.conj(direct)
+    np.testing.assert_allclose(aligned.imag, 0.0, atol=1e-12, rtol=1e-12)
+    assert np.all(aligned.real > 0.0)
+
+
+def test_global_critic_state_contains_each_physical_feature_once():
+    env = StarRisRsmaEnv(_cfg(), seed=91)
+    env.reset(seed=92)
+    spec = env.spec()
+    assert env.global_state().shape == (spec.global_state_dim,)
+    assert spec.global_state_dim == env.single_agent_obs_dim
+    assert spec.global_state_dim < sum(spec.obs_dims)

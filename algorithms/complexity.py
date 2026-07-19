@@ -34,14 +34,17 @@ def linear_flops(module: nn.Module) -> int:
 
 
 def _net_kwargs(net_cfg: dict) -> dict:
+    # Complexity accounting depends only on layer shapes.  Disable expensive
+    # orthogonal initialisation here; it does not change parameter/FLOP counts
+    # and otherwise makes the TD3-Matched width search needlessly slow.
     return {"activation": net_cfg.get("activation", "relu"),
             "layer_norm": net_cfg.get("layer_norm", True),
-            "ortho": net_cfg.get("ortho_init", True)}
+            "ortho": False}
 
 
 def maddpg_param_counts(spec, hidden_sizes: list[int], net_cfg: dict) -> dict:
     kw = _net_kwargs(net_cfg)
-    total_obs = int(sum(spec.obs_dims))
+    total_obs = int(spec.global_state_dim)
     total_act = int(sum(spec.act_dims))
     actors = [Actor(o, a, hidden_sizes, **kw) for o, a in zip(spec.obs_dims, spec.act_dims)]
     critics = [CentralizedCritic(total_obs, total_act, hidden_sizes, **kw)

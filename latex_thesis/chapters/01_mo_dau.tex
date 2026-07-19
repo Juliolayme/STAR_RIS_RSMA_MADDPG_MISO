@@ -73,10 +73,10 @@ qua STAR-RIS, suy hao đường truyền log-distance, pha-đinh Rayleigh),
 mô hình tín hiệu RSMA, và bài toán tối ưu phân bổ tài nguyên (P0) với
 đầy đủ các ràng buộc về công suất, bảo toàn năng lượng STAR-RIS, phân
 chia luồng chung và QoS.
-\item Đề xuất khuôn khổ MADDPG với ba tác tử chuyên dụng (BS Power, STAR-RIS
-Reflection, STAR-RIS Transmission) cùng hai cải tiến: (i) tham số hóa
-pha residual dựa trên nghiệm phân tích bậc một và (ii) hàm phần thưởng
-dạng Lagrangian với các hệ số phạt $\lambda_k$ riêng cho từng người dùng,
+\item Đề xuất khuôn khổ MADDPG với ba tác tử chuyên dụng (BS Beamforming,
+STAR-RIS Reflection, STAR-RIS Transmission), sử dụng ánh xạ pha tuyệt đối
+trong cấu hình chính và hàm phần thưởng dạng Lagrangian với các hệ số phạt
+$\lambda_k$ riêng cho từng người dùng,
 được cập nhật bằng phương pháp gradient đối ngẫu có phép chiếu
 (projected dual gradient) trên khe hở ràng buộc có dấu
 $c_k = R_{\min} - R_k$, để cân bằng tốc độ tổng và QoS.
@@ -149,8 +149,9 @@ bội.
 \begin{itemize}[leftmargin=*]
 \item Mở rộng bài toán P0 cổ điển bằng việc bổ sung ràng buộc QoS từng
 người dùng và xem xét biên độ STAR-RIS như biến tối ưu thay vì cố định.
-\item Đề xuất tham số hóa pha residual, một kỹ thuật giúp giảm
-không gian khám phá của tác tử pha và cải thiện đáng kể tốc độ hội tụ.
+\item Xây dựng nghiệm căn pha giải tích nhất quán với quy ước kênh MISO để
+làm baseline vật lý và điểm khởi tạo cho các heuristic AO. Tham số hóa
+residual được giữ như một ablation tùy chọn, không phải cấu hình chính.
 \item Đề xuất hàm phần thưởng dạng Lagrangian surrogate với các hệ số
 $\lambda_k$ riêng cho từng người dùng, được cập nhật bằng projected dual
 gradient trên khe hở ràng buộc có dấu, cho phép tự điều chỉnh cân bằng
@@ -191,8 +192,7 @@ nguyên lý RSMA, công nghệ STAR-RIS, khuôn khổ DRL và thuật toán MADD
 mô hình kênh truyền, mô hình tín hiệu RSMA, phát biểu bài toán tối ưu
 (P0) và ánh xạ sang MDP.
 \item \textbf{Chương 3, Phương pháp đề xuất MADDPG:} Trình bày chi tiết
-kiến trúc ba tác tử chuyên dụng, mạng nơ-ron Actor-Critic, các cải
-tiến (residual phase, Lagrangian reward thích nghi) và quy trình huấn
+kiến trúc ba tác tử chuyên dụng, mạng nơ-ron Actor-Critic, các cơ chế ổn định hóa (Lagrangian reward thích nghi, two-stage dual freeze) và quy trình huấn
 luyện.
 \item \textbf{Chương 4, Kết quả mô phỏng và đánh giá:} Trình bày toàn bộ
 kết quả mô phỏng số học, so sánh với các baseline, phân tích loại trừ

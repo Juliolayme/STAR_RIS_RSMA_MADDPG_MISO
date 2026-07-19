@@ -1,5 +1,5 @@
-"""Regression: env_formulation='static_block' must reproduce the pre-refactor
-physics recorded in the golden fixture (tests/fixtures/golden_static_block.npz).
+"""Regression: env_formulation='static_block' must reproduce the frozen MISO
+physics snapshot recorded in the golden fixture (tests/fixtures/golden_static_block.npz).
 
 Only PHYSICAL outputs are compared (channels, effective channels, RSMA rates).
 Rewards, observations and dual variables changed by design in the refactor and
@@ -88,3 +88,10 @@ def test_static_block_reproduces_golden_physics(golden, case_name):
             np.testing.assert_allclose(
                 np.asarray(actual), expected, rtol=rtol, atol=atol,
                 err_msg=f"{case_name} step {t}: mismatch in {key}")
+
+
+def test_golden_metadata_records_source_provenance(golden):
+    _, meta = golden
+    assert len(meta["env_sha256"]) == 64
+    assert len(meta["generator_sha256"]) == 64
+    assert meta["base_branch_commit"] == "67d6adec0ecb5e735f35e01a36c41ebd1dec3c9e"

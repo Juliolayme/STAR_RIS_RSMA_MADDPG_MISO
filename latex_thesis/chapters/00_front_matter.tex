@@ -114,9 +114,9 @@ $K$ & Tổng số người dùng (UE) trong hệ thống \\
 $K_R, K_T$ & Số UE trong vùng phản xạ R và vùng truyền qua T \\
 $M$ & Số anten của trạm gốc (BS) \\
 $h_{d,k}$ & Kênh truyền trực tiếp từ BS đến UE thứ $k$ \\
-$\mathbf{G}$ & Vector kênh truyền từ BS đến STAR-RIS, $\mathbf{G} \in \mathbb{C}^{N \times 1}$ \\
+$\mathbf{G}$ & Ma trận kênh từ BS đến STAR-RIS, $\mathbf{G} \in \mathbb{C}^{N \times M}$ \\
 $\mathbf{h}_{r,k}^X$ & Vector kênh từ STAR-RIS đến UE thứ $k$, vùng $X \in \{R, T\}$ \\
-$h_{eff,k}$ & Kênh hiệu dụng SISO tương đương BS--UE thứ $k$ \\
+$\mathbf{h}_{\mathrm{eff},k}$ & Vector kênh hiệu dụng MISO, được lưu sao cho $\mathbf{h}_{\mathrm{eff},k}^{H}\mathbf{w}=\mathbf{h}_{d,k}^{H}\mathbf{w}+\mathbf{g}_{k}^{H}\boldsymbol{\Phi}_{X}\mathbf{G}\mathbf{w}$ \\
 $\Phi_n^X$ & Hệ số phản xạ/truyền qua của phần tử thứ $n$, $X \in \{R, T\}$ \\
 $\boldsymbol{\Phi}_X$ & Ma trận pha dịch STAR-RIS vùng $X$, dạng đường chéo \\
 $\beta_n^R, \beta_n^T$ & Hệ số phân chia năng lượng phản xạ/truyền qua, $\in [0,1]$ \\

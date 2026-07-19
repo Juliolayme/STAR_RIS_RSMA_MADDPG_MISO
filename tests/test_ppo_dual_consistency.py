@@ -21,7 +21,7 @@ def test_dual_update_only_after_ppo_learn(tmp_path, monkeypatch):
     orig_learn = T.PPOAgent.learn
     orig_dual = T.DualUpdater.update
 
-    def learn_wrap(self, last_v):
+    def learn_wrap(self, last_v=None):
         calls.append("learn")
         return orig_learn(self, last_v)
 

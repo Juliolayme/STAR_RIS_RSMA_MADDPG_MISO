@@ -417,6 +417,7 @@ def train_maddpg(cfg: dict, total_episodes: int | None = None,
     if disable_obs_norm:
         for o in obs_norms:
             o.enabled = False
+        agent.global_obs_norm.enabled = False
     agent.attach_obs_normalizers(obs_norms)
     logger = Logger(log_dir, run_name)
 
@@ -450,7 +451,8 @@ def train_maddpg(cfg: dict, total_episodes: int | None = None,
     pbar = tqdm(range(start_ep, total_episodes), desc=run_name, ncols=110)
     for ep in pbar:
         env.reset(seed=seed + ep)
-        per_agent_obs = env.per_agent_observations()   # RAW observations
+        per_agent_obs = env.per_agent_observations()   # RAW local observations
+        global_state = env.global_state()              # RAW canonical critic state
         agent.reset_noise()
         buf = defaultdict(list)
         ep_return, steps = 0.0, 0
@@ -462,10 +464,15 @@ def train_maddpg(cfg: dict, total_episodes: int | None = None,
             if not math.isfinite(reward):
                 logger.buffer("nan_reward_count", 1.0)
                 continue
-            next_per_agent = env.per_agent_observations()   # RAW
-            agent.add_transition(per_agent_obs, actions, reward, next_per_agent, float(bootstrap_done),
-                                 base_reward=info["base_reward"],
-                                 c_gap=info["qos_constraint_signed"])
+            next_per_agent = env.per_agent_observations()   # RAW local
+            next_global_state = env.global_state()
+            agent.add_transition(
+                per_agent_obs, actions, reward, next_per_agent,
+                float(bootstrap_done),
+                base_reward=info["base_reward"],
+                c_gap=info["qos_constraint_signed"],
+                global_state=global_state,
+                next_global_state=next_global_state)
             agent.increment_step()
             total_env_steps += 1
             if total_env_steps >= freeze_after and not agent.normalizers_frozen():
@@ -480,6 +487,7 @@ def train_maddpg(cfg: dict, total_episodes: int | None = None,
             _aggregate_info(buf, info, reward)
             ep_return += reward
             per_agent_obs = next_per_agent
+            global_state = next_global_state
             steps += 1
             if episode_done:
                 break
@@ -767,13 +775,16 @@ def train_ppo(cfg: dict, total_episodes: int | None = None,
             action, log_prob, value = agent.select_action(obs, explore=True)
             next_obs, reward, term, trunc, info = env.step(action)
             episode_done = term or trunc
-            bootstrap_done = term
             if not math.isfinite(reward):
                 logger.buffer("nan_reward_count", 1.0)
                 continue
-            # Store the EXACT normalized observation used to compute log_prob/
-            # value (item 2), not the raw observation.
-            agent.store(agent.last_norm_obs, action, log_prob, reward, value, float(bootstrap_done))
+            # Delta bootstraps through time-limit truncation but not a true
+            # terminal. GAE recursion is cut at either episode boundary.
+            next_value = 0.0 if term else agent.value(next_obs)
+            agent.store(
+                agent.last_norm_obs, action, log_prob, reward, value,
+                terminated=bool(term), episode_end=bool(episode_done),
+                next_value=next_value)
             rollout_c_sum += np.asarray(info["qos_constraint_signed"], dtype=np.float64)
             rollout_c_cnt += 1
             total_env_steps += 1
@@ -787,16 +798,14 @@ def train_ppo(cfg: dict, total_episodes: int | None = None,
             obs = next_obs
             steps += 1
             if agent.buffer_full():
-                last_v = 0.0 if bootstrap_done else agent.value(obs)
-                losses = agent.learn(last_v)     # lambda fixed for this batch
+                losses = agent.learn()           # lambda fixed for this batch
                 for k, v in losses.items():
                     logger.buffer(k, v)
                 _apply_dual_after_rollout(ep)     # update lambda AFTER the batch
             if episode_done:
                 break
         if agent.rollout.size > 0 and (ep == total_episodes - 1 or agent.buffer_full()):
-            last_v = 0.0 if term else agent.value(obs)
-            losses = agent.learn(last_v)
+            losses = agent.learn()
             for k, v in losses.items():
                 logger.buffer(k, v)
             _apply_dual_after_rollout(ep)

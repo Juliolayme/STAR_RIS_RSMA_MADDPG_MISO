@@ -24,7 +24,7 @@
    - Kênh ĐỘNG Gauss–Markov: h_{t+1} = 0,95·h_t + sqrt(1−0,95²)·ε (mỗi step một khối coherence)
    - Reward: α·R_sum/R_ref − Σλ_k·c_k − (w/2)·Σmax(c_k,0)² − switching costs (KHÔNG còn b_sat, b_power)
    - Seeds: 8 training; validation [11..55]; legacy [9101..9505]; locked final test [70001..70005]. Source: config/seed_split.v1.yaml, SHA-256 d73ba5aea6d037570f2634cbc87175db259a6e91f0fecee74519eecd1f118854
-   - Kích thước MDP MỚI: obs 26+344+180=**550**; action 9+64+32=105; critic input **655**
+   - Kích thước MDP MỚI: local obs 73+577+401; canonical state **681**; action 44+64+32=**140**; critic input **821**
 
 ---
 
@@ -77,9 +77,9 @@
 **Sửa:** 3 critic thay vì 1; sửa "Tác từ"→"Tác tử"; giảm chữ trong khối (chi tiết siêu tham số bỏ hết — đã có Bảng 3.1).
 
 ### H7 — `h2_1_cau_hinh_he_thong` (Hình 2.1, Chương 2)
-**Mục đích:** Cấu hình hệ thống: BS SISO → STAR-RIS → 2 vùng người dùng.
+**Mục đích:** Cấu hình hệ thống: BS MISO → STAR-RIS → 2 vùng người dùng.
 **Bố cục (ngang):**
-- Trái: icon **Trạm gốc (BS)** + nhãn "M = 1 anten, P_max = 30 dBm".
+- Trái: icon **Trạm gốc (BS)** + nhãn "M = 4 anten, P_max = 30 dBm".
 - Giữa: tấm **STAR-RIS đứng dọc** (lưới chấm; nửa trên nhãn **R**, nửa dưới nhãn **T**; chú thích "N = 32 phần tử, chế độ ES").
 - Phải-trên: khung **"Vùng phản xạ (R)"** chứa UE_R1, UE_R2, UE_R3 (CÙNG PHÍA với BS).
 - Phải-dưới (hoặc tách hẳn bên kia tấm RIS): khung **"Vùng truyền qua (T)"** chứa UE_T1; giữa BS và UE_T1 vẽ **bức tường/chướng ngại** + nhãn "chặn −25 dB".
@@ -114,14 +114,14 @@
 ### H11 — `h2_5_mdp_anh_xa` (Hình 2.5)
 **Mục đích:** Ánh xạ P0 → MDP (3 cột: S, A, R).
 **Bố cục 3 cột:**
-- **Cột 1 "KHÔNG GIAN TRẠNG THÁI 𝒮 (550 chiều)":** 3 khối: Agent 0 (BS) — 26 · Agent 1 (RIS-R) — 280 · Agent 2 (RIS-T) — 148; mỗi khối 1 dòng mô tả ngắn (vd "kênh G, h_r; pha hiện tại").
-- **Cột 2 "KHÔNG GIAN HÀNH ĐỘNG 𝒜 (105 chiều)":** Agent 0 — 9 (công suất+tỷ lệ tách, softmax) · Agent 1 — 64 (Δφ^R + β^R) · Agent 2 — 32 (Δφ^T); ghi chú residual: "θ = θ_prior + **(π/4)**·Δφ".
+- **Cột 1 "TRẠNG THÁI CRITIC 𝒮 (681 chiều)":** 3 khối: Agent 0 (BS) — 26 · Agent 1 (RIS-R) — 280 · Agent 2 (RIS-T) — 148; mỗi khối 1 dòng mô tả ngắn (vd "kênh G, h_r; pha hiện tại").
+- **Cột 2 "KHÔNG GIAN HÀNH ĐỘNG 𝒜 (140 chiều)":** Agent 0 — 44 (beamforming phức + common split) · Agent 1 — 64 (Δφ^R + β^R) · Agent 2 — 32 (Δφ^T); ghi chú pha chính: "θ = π(a+1)"; residual chỉ là ablation.
 - **Cột 3 "PHẦN THƯỞNG r_t (chia sẻ)":** khối công thức r_t = 1,5·R̃_sum − λ_t·Σ[max(0,R_min−R_k)]² + b_pwr + b_sat; khối "λ thích nghi: ×1,02 nếu QoS<0,5 · ×0,97 nếu QoS>0,6 · λ∈[0,3; **13**]"; khối màu nhấn "**FREEZE: đóng băng λ từ episode 0,55·E = 1100**".
 **⚠️ SỬA SỐ bản cũ:** π/2→π/4; 1,05→1,02; 1,02→0,97; 15,0→13,0; [0,3, 15]→[0,3, 13]; THÊM khối freeze (bản cũ không có).
 
 ### H12 — `h2_6_3agents` (Hình 2.6)
 **Mục đích:** Phân rã 3 tác tử + Critic tập trung (bản "kỹ thuật" có số chiều).
-**Bố cục:** hàng trên 3 khối Actor: "Actor₀ BS: 26 → 256 → 256 → 9" · "Actor₁ RIS-R: 344 → 256 → 256 → 64" · "Actor₂ RIS-T: 180 → 256 → 256 → 32"; hàng dưới 1 khung "Critic tập trung Q_i (×3): đầu vào (o,a) = 550+105 = **655** → 256 → 256 → 1 · chỉ dùng khi huấn luyện". Mũi tên o_i,a_i từ actor xuống critic; nét đứt gradient ngược lên.
+**Bố cục:** hàng trên 3 khối Actor: "Actor₀ BS: 73 → 256 → 256 → 44" · "Actor₁ RIS-R: 577 → 256 → 256 → 64" · "Actor₂ RIS-T: 401 → 256 → 256 → 32"; hàng dưới 1 khung "Critic tập trung Q_i (×3): đầu vào (s,a) = 681+140 = **821** → 256 → 256 → 1 · chỉ dùng khi huấn luyện". Mũi tên o_i,a_i từ actor xuống critic; nét đứt gradient ngược lên.
 **Chân hình:** "Phần thưởng chia sẻ r_t cho cả 3 tác tử (cooperative)".
 
 ### H13 — `h2_7_overall_workflow` (Hình 2.7)

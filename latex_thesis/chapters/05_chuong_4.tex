@@ -47,7 +47,7 @@ chia làm hai nhóm:
 \noindent\textbf{Nhóm A, Các thuật toán DRL đơn tác tử / đa tác tử khác:}
 \begin{itemize}[leftmargin=*]
 \item \textbf{DDPG} \cite{lillicrap2016continuous}: tác tử đơn với hành
-động 105 chiều hợp nhất.
+động 140 chiều hợp nhất.
 \item \textbf{TD3} \cite{fujimoto2018addressing}: cải tiến của DDPG với
 hai Critic và trì hoãn cập nhật Actor.
 \item \textbf{PPO} \cite{schulman2017proximal}: thuật toán on-policy với
@@ -518,7 +518,7 @@ sum-rate và QoS ngang bằng tác tử đơn tốt nhất, đồng thời mở 
 nhanh hơn heuristic AO-Grid $\approx 23$ lần, mục
 \ref{sec:complexity_analysis}). Việc kiến trúc đa tác tử không vượt
 trội cũng là một phát hiện có giá trị: ở dải $N \leq 128$ và cấu hình
-SISO khảo sát, chi phí điều phối ba tác tử được bù trừ vừa đủ bởi lợi
+MISO khảo sát, chi phí điều phối ba tác tử được bù trừ vừa đủ bởi lợi
 ích phân rã, khiến tác tử đơn được điều chỉnh tốt vẫn là lựa chọn hợp
 lý. Khảo sát lợi thế phân rã ở quy mô lớn hơn (MISO/MIMO, $N \gg 128$,
 nhiều UE hơn) được để lại cho hướng nghiên cứu tương lai.
@@ -608,7 +608,7 @@ chiếm gần một nửa tổng tốc độ. Một phần chênh lệch sum-rat
 AO-Grid do đó là chênh lệch \emph{mục tiêu} (AO-Grid không trả giá
 cho QoS), không thuần túy là chênh lệch chất lượng tối ưu.
 \item Đáng chú ý, khoảng cách Learned--MaxMinAligned đã được thu hẹp
-đáng kể nhờ biên độ residual $\pm\pi/4$ (mục \ref{sec:residual_phase}):
+; kết luận lịch sử về residual không được dùng và ablation MISO mới đang PENDING:
 chính sách học được giữ sát nghiệm giải tích tốt trong khi vẫn tự do
 hiệu chỉnh đa người dùng và phối hợp với phân bổ công suất --- điều
 nghiệm đóng đơn lẻ không làm được.
@@ -933,12 +933,11 @@ nhanh hơn $\approx 23$ lần so với heuristic AO-Grid ($13{,}97$ ms) giải
 lại cho từng channel realization; các phương pháp tối ưu lặp đầy đủ còn
 chậm hơn nhiều bậc.
 
-\textbf{(K5) Tham số hóa pha residual giúp hội tụ ổn định và tiệm cận
-nghiệm giải tích.} Đường cong hội tụ của MADDPG (Hình
-\ref{fig:training_sum_rate}) cải thiện đều đặn từ episode đầu tiên;
-với biên độ residual $\pm\pi/4$, chính sách học đạt sum-rate tương
-đương thống kê với nghiệm căn pha đóng MaxMinAligned trong khi vẫn
-phối hợp được với phân bổ công suất.
+\textbf{(K5) Trạng thái ablation pha.} Cấu hình kết quả chính sử dụng
+ánh xạ pha tuyệt đối. Mọi kết luận về biến thể residual, biên độ
+$\rho_{\phi}$ hoặc lợi ích hội tụ của prior giải tích được đánh dấu PENDING
+cho đến khi ablation MISO được chạy lại trên cùng seed split và locked test
+bank.
 
 \textbf{(K6) Lịch trình two-stage dual freeze giúp đọc hội tụ dễ hơn.}
 Bằng cách đóng băng các biến đối ngẫu ở $45\%$ cuối huấn luyện, hàm

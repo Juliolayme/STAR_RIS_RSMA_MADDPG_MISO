@@ -34,10 +34,14 @@ def test_replay_buffer_stores_raw_observations():
 
     env.reset(seed=2)
     raw = env.per_agent_observations()
+    global_state = env.global_state()
     actions = agent.select_actions(raw, explore=True)
     env.step(actions)
     raw_next = env.per_agent_observations()
-    agent.add_transition(raw, actions, 0.5, raw_next, 0.0)
+    next_global_state = env.global_state()
+    agent.add_transition(raw, actions, 0.5, raw_next, 0.0,
+                         global_state=global_state,
+                         next_global_state=next_global_state)
 
     for i in range(agent.n_agents):
         stored = agent.buffer.obs[i][0]

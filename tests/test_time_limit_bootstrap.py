@@ -69,8 +69,8 @@ def test_offpolicy_buffers_bootstrap_through_time_limit(tmp_path):
 def test_ppo_bootstraps_through_time_limit(tmp_path, monkeypatch):
     captured = []
 
-    def fake_learn(self, last_value):
-        captured.append(float(last_value))
+    def fake_learn(self, last_value=None):
+        captured.extend(self.rollout.next_values[:self.rollout.size].tolist())
         self.rollout.reset()
         return {}
 

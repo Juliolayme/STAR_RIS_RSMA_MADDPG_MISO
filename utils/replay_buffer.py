@@ -84,13 +84,18 @@ class MAReplayBuffer:
     scalar rewards.
     """
     def __init__(self, capacity: int, obs_dims: Sequence[int], act_dims: Sequence[int],
-                 n_users: int = 0):
+                 n_users: int = 0, global_state_dim: int | None = None):
         assert len(obs_dims) == len(act_dims)
         self.capacity = int(capacity)
         self.n_agents = len(obs_dims)
         self.n_users = int(n_users)
         self.obs = [np.zeros((self.capacity, d), dtype=np.float32) for d in obs_dims]
         self.next_obs = [np.zeros((self.capacity, d), dtype=np.float32) for d in obs_dims]
+        self.global_state_dim = None if global_state_dim is None else int(global_state_dim)
+        self.global_states = (None if self.global_state_dim is None else
+                              np.zeros((self.capacity, self.global_state_dim), dtype=np.float32))
+        self.next_global_states = (None if self.global_state_dim is None else
+                                   np.zeros((self.capacity, self.global_state_dim), dtype=np.float32))
         self.actions = [np.zeros((self.capacity, d), dtype=np.float32) for d in act_dims]
         self.rewards = [np.zeros((self.capacity, 1), dtype=np.float32) for _ in range(self.n_agents)]
         self.base_rewards = np.zeros((self.capacity, 1), dtype=np.float32)
@@ -103,13 +108,19 @@ class MAReplayBuffer:
         return self.size
 
     def add(self, obs_list, action_list, reward_list, next_obs_list, done,
-            base_reward=None, c_gap=None):
+            base_reward=None, c_gap=None, global_state=None,
+            next_global_state=None):
         i = self.idx
         for a in range(self.n_agents):
             self.obs[a][i] = obs_list[a]
             self.next_obs[a][i] = next_obs_list[a]
             self.actions[a][i] = action_list[a]
             self.rewards[a][i, 0] = float(reward_list[a])
+        if self.global_states is not None:
+            if global_state is None or next_global_state is None:
+                raise ValueError("canonical global_state and next_global_state are required")
+            self.global_states[i] = np.asarray(global_state, dtype=np.float32).reshape(-1)
+            self.next_global_states[i] = np.asarray(next_global_state, dtype=np.float32).reshape(-1)
         self.base_rewards[i, 0] = float(reward_list[0] if base_reward is None else base_reward)
         if c_gap is not None and self.n_users > 0:
             self.c_gaps[i, :] = np.asarray(c_gap, dtype=np.float32).reshape(-1)
@@ -118,7 +129,8 @@ class MAReplayBuffer:
         self.size = min(self.size + 1, self.capacity)
 
     def sample(self, batch_size: int, rng: np.random.Generator | None = None,
-               lambda_vec=None, reward_scale: float = 1.0, reward_clip: float = 1e9):
+               lambda_vec=None, reward_scale: float = 1.0, reward_clip: float = 1e9,
+               include_global_state: bool = False):
         rng = rng or np.random.default_rng()
         idxs = rng.integers(0, self.size, size=batch_size)
         obs = [o[idxs].copy() for o in self.obs]
@@ -131,4 +143,10 @@ class MAReplayBuffer:
         else:
             rewards = [r[idxs].copy() for r in self.rewards]
         dones = self.dones[idxs].copy()
+        if include_global_state:
+            if self.global_states is None:
+                raise ValueError("global-state sampling requested for a local-only buffer")
+            return (obs, actions, rewards, next_obs, dones,
+                    self.global_states[idxs].copy(),
+                    self.next_global_states[idxs].copy())
         return obs, actions, rewards, next_obs, dones

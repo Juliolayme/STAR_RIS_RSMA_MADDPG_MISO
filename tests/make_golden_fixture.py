@@ -10,6 +10,7 @@ Fixture metadata (source version, config, library versions, date) is stored in
 the .npz and in a JSON sidecar for auditability.
 """
 from __future__ import annotations
+import hashlib
 import json
 import os
 import platform
@@ -23,6 +24,14 @@ if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 from env import StarRisRsmaEnv  # noqa: E402
+
+
+def _sha256(path: str) -> str:
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
 
 
 def _base_cfg(n_elements: int, num_users: int, k_r: int,
@@ -116,9 +125,14 @@ def main():
     fixture_dir = os.path.join(PROJECT_ROOT, "tests", "fixtures")
     os.makedirs(fixture_dir, exist_ok=True)
     arrays: dict[str, np.ndarray] = {}
+    env_source = os.path.join(PROJECT_ROOT, "env", "star_ris_env.py")
+    generator_source = os.path.abspath(__file__)
     meta = {
-        "source": "current MISO implementation (env/star_ris_env.py)",
+        "source": "MISO physics snapshot (not an independent correctness oracle)",
         "generated": str(date.today()),
+        "base_branch_commit": "67d6adec0ecb5e735f35e01a36c41ebd1dec3c9e",
+        "env_sha256": _sha256(env_source),
+        "generator_sha256": _sha256(generator_source),
         "python": sys.version,
         "numpy": np.__version__,
         "platform": platform.platform(),

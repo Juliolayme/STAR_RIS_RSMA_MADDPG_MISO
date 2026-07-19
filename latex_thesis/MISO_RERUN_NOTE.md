@@ -17,4 +17,9 @@ Current authoritative code schema for the default MISO config (`M=4`, `K=4`,
 
 - action dimension: 140
 - local observation dimensions: 73, 577, 401
-- centralized critic input: 1191
+- canonical critic state: 681
+- joint critic input including actions: 821
+
+- Analytical/AO baselines use the received-signal-aligned phase prior.
+- PPO two-mask GAE bootstraps through time limits and cuts recursion at resets.
+- Primary configuration uses absolute phase mapping; residual is an optional ablation.

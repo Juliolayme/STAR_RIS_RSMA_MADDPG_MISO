@@ -115,6 +115,8 @@ def test_resume_checkpoint_uses_only_replay_size_entries(tmp_path):
     for arr in replay["obs"]:
         assert arr.shape[0] == size, "replay saved more than size entries"
     assert replay["dones"].shape[0] == size
+    assert replay["global_states"].shape[0] == size
+    assert replay["next_global_states"].shape[0] == size
 
 
 def test_inference_checkpoint_roundtrip(tmp_path):

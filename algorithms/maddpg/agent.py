@@ -67,7 +67,8 @@ class MADDPG:
         self.n_agents = env_spec.n_agents
         self.obs_dims = env_spec.obs_dims
         self.act_dims = env_spec.act_dims
-        self.total_obs_dim = int(sum(self.obs_dims))
+        self.global_state_dim = int(env_spec.global_state_dim)
+        self.total_obs_dim = self.global_state_dim
         self.total_act_dim = int(sum(self.act_dims))
 
         cfg = {**net_cfg, **maddpg_cfg}
@@ -80,8 +81,9 @@ class MADDPG:
         self.n_users = int(n_users)
         self.reward_scale = float(reward_scale)
         self.reward_clip = float(reward_clip)
-        self.buffer = MAReplayBuffer(maddpg_cfg["buffer_size"], self.obs_dims,
-                                     self.act_dims, n_users=self.n_users)
+        self.buffer = MAReplayBuffer(
+            maddpg_cfg["buffer_size"], self.obs_dims, self.act_dims,
+            n_users=self.n_users, global_state_dim=self.global_state_dim)
         self.gamma = float(maddpg_cfg["gamma"])
         self.tau = float(maddpg_cfg["tau"])
         self.batch_size = int(maddpg_cfg["batch_size"])
@@ -102,6 +104,7 @@ class MADDPG:
         # Agent-owned observation normalizers (one per agent). Attached by the
         # training driver; identity if never attached.
         self.obs_norms: list[ObservationNormalizer] | None = None
+        self.global_obs_norm = ObservationNormalizer(shape=(self.global_state_dim,))
 
     # -------------------------------------------------- normalization
     def attach_obs_normalizers(self, norms: list[ObservationNormalizer]) -> None:
@@ -112,9 +115,12 @@ class MADDPG:
         if self.obs_norms is not None:
             for n in self.obs_norms:
                 n.freeze()
+        self.global_obs_norm.freeze()
 
     def normalizers_frozen(self) -> bool:
-        return self.obs_norms is not None and all(n.frozen for n in self.obs_norms)
+        return (self.obs_norms is not None
+                and all(n.frozen for n in self.obs_norms)
+                and self.global_obs_norm.frozen)
 
     def _norm_one(self, i: int, obs: np.ndarray, update: bool) -> np.ndarray:
         if self.obs_norms is None:
@@ -125,6 +131,9 @@ class MADDPG:
         if self.obs_norms is None:
             return np.asarray(obs, dtype=np.float32)
         return self.obs_norms[i].normalize_batch(obs)
+
+    def _norm_global_batch(self, state: np.ndarray) -> np.ndarray:
+        return self.global_obs_norm.normalize_batch(state)
 
     # -------------------------------------------------- exploration noise
     def _current_noise_sigma(self) -> float:
@@ -178,12 +187,19 @@ class MADDPG:
 
     # -------------------------------------------------- buffer
     def add_transition(self, obs_list, action_list, reward, next_obs_list, done,
-                       base_reward=None, c_gap=None):
-        """Store RAW observations; cooperative reward broadcast across agents.
-        base_reward + c_gap enable reward recomputation under the current lambda."""
+                       base_reward=None, c_gap=None, global_state=None,
+                       next_global_state=None):
+        """Store raw local observations plus one canonical critic state."""
+        if global_state is None or next_global_state is None:
+            raise ValueError("MADDPG transitions require canonical global states")
+        # Update critic-state statistics once per collected transition. Replay
+        # still stores raw states and normalizes only when sampled.
+        self.global_obs_norm(global_state, update=True)
         rewards = [reward] * self.n_agents
         self.buffer.add(obs_list, action_list, rewards, next_obs_list, done,
-                        base_reward=base_reward, c_gap=c_gap)
+                        base_reward=base_reward, c_gap=c_gap,
+                        global_state=global_state,
+                        next_global_state=next_global_state)
 
     # -------------------------------------------------- learning
     def learn(self) -> dict:
@@ -191,9 +207,11 @@ class MADDPG:
             return {}
         # Recompute rewards under the CURRENT lambda so the critic never trains
         # on stale reward functions (item 1).
-        obs, actions, rewards, next_obs, dones = self.buffer.sample(
+        (obs, actions, rewards, next_obs, dones,
+         global_states, next_global_states) = self.buffer.sample(
             self.batch_size, rng=self._rng, lambda_vec=self.current_lambda,
-            reward_scale=self.reward_scale, reward_clip=self.reward_clip)
+            reward_scale=self.reward_scale, reward_clip=self.reward_clip,
+            include_global_state=True)
         # Buffer holds RAW observations -> normalize per agent at sample time.
         obs = [self._norm_batch(i, o) for i, o in enumerate(obs)]
         next_obs = [self._norm_batch(i, o) for i, o in enumerate(next_obs)]
@@ -203,8 +221,8 @@ class MADDPG:
         rew_t = [_to_t(r, self.device) for r in rewards]
         done_t = _to_t(dones, self.device)
 
-        joint_obs = torch.cat(obs_t, dim=-1)
-        joint_next_obs = torch.cat(next_obs_t, dim=-1)
+        global_state_t = _to_t(self._norm_global_batch(global_states), self.device)
+        next_global_state_t = _to_t(self._norm_global_batch(next_global_states), self.device)
         joint_act = torch.cat(act_t, dim=-1)
 
         with torch.no_grad():
@@ -216,9 +234,9 @@ class MADDPG:
         # ---- Critic updates ----
         for i, agent in enumerate(self.agents):
             with torch.no_grad():
-                q_next = agent.critic_target(joint_next_obs, joint_target_act)
+                q_next = agent.critic_target(next_global_state_t, joint_target_act)
                 y = rew_t[i] + self.gamma * (1.0 - done_t) * q_next
-            q = agent.critic(joint_obs, joint_act)
+            q = agent.critic(global_state_t, joint_act)
             critic_loss = F.mse_loss(q, y)
             if not torch.isfinite(critic_loss):
                 continue
@@ -237,7 +255,7 @@ class MADDPG:
         if self._learn_step % self.policy_update_every == 0:
             for i, agent in enumerate(self.agents):
                 joint_act_pi = self._actor_joint_action(i, obs_t)
-                actor_loss = -agent.critic(joint_obs, joint_act_pi).mean()
+                actor_loss = -agent.critic(global_state_t, joint_act_pi).mean()
                 if not torch.isfinite(actor_loss):
                     continue
                 agent.actor_opt.zero_grad(set_to_none=True)
@@ -298,6 +316,7 @@ class MADDPG:
             "global_step": self._global_step,
             "rng": self._rng.bit_generator.state,
             "obs_norms": None if self.obs_norms is None else [n.state_dict() for n in self.obs_norms],
+            "global_obs_norm": self.global_obs_norm.state_dict(),
             "current_lambda": (None if self.current_lambda is None
                                else self.current_lambda.tolist()),
         }
@@ -320,6 +339,8 @@ class MADDPG:
                 self.obs_norms = [ObservationNormalizer(shape=(d,)) for d in self.obs_dims]
             for n, s in zip(self.obs_norms, state["obs_norms"]):
                 n.load_state_dict(s)
+        if state.get("global_obs_norm") is not None:
+            self.global_obs_norm.load_state_dict(state["global_obs_norm"])
 
     def replay_state(self) -> dict:
         """Only the VALID [0:size] entries are saved (item 3 reviewer fix)."""
@@ -328,6 +349,8 @@ class MADDPG:
         return {"capacity": int(b.capacity), "idx": int(b.idx), "size": s,
                 "obs": [o[:s].copy() for o in b.obs],
                 "next_obs": [o[:s].copy() for o in b.next_obs],
+                "global_states": b.global_states[:s].copy(),
+                "next_global_states": b.next_global_states[:s].copy(),
                 "actions": [a[:s].copy() for a in b.actions],
                 "rewards": [r[:s].copy() for r in b.rewards],
                 "base_rewards": b.base_rewards[:s].copy(),
@@ -341,6 +364,10 @@ class MADDPG:
                          (b.actions, state["actions"]), (b.rewards, state["rewards"])):
             for t, arr in zip(tgt, src):
                 t[:s] = arr
+        if "global_states" not in state:
+            raise ValueError("checkpoint predates canonical CTDE global states; retrain")
+        b.global_states[:s] = state["global_states"]
+        b.next_global_states[:s] = state["next_global_states"]
         if "base_rewards" in state:
             b.base_rewards[:s] = state["base_rewards"]
             b.c_gaps[:s] = state["c_gaps"]
@@ -356,6 +383,7 @@ class MADDPG:
             "kind": "maddpg_inference",
             "weights": self.weights_state_dict(),
             "obs_norms": None if self.obs_norms is None else [n.state_dict() for n in self.obs_norms],
+            "global_obs_norm": self.global_obs_norm.state_dict(),
             "obs_dims": list(self.obs_dims),
             "act_dims": list(self.act_dims),
             "meta": extra_meta or {},
@@ -370,6 +398,8 @@ class MADDPG:
                 self.obs_norms = [ObservationNormalizer(shape=(d,)) for d in self.obs_dims]
             for n, s in zip(self.obs_norms, payload["obs_norms"]):
                 n.load_state_dict(s)
+        if payload.get("global_obs_norm") is not None:
+            self.global_obs_norm.load_state_dict(payload["global_obs_norm"])
 
     # Back-compat plain weight save/load.
     def save(self, path: str):

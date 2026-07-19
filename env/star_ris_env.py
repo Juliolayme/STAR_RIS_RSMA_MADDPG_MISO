@@ -288,10 +288,13 @@ class StarRisRsmaEnv(gym.Env):
         self._build_schemas()
         self.obs_dims = [sch[-1].stop for sch in self._obs_schema]
         self.obs_dim_per_agent = max(self.obs_dims)
-        self.global_state_dim = int(sum(self.obs_dims))
+        self.single_agent_obs_dim = self._single_schema[-1].stop
+        # Canonical centralized-critic state: every physical feature appears
+        # exactly once. Concatenating local observations duplicates the shared
+        # h_eff/base block and the BS->RIS channel G.
+        self.global_state_dim = int(self.single_agent_obs_dim)
 
         self.act_dim_flat = int(sum(self.act_dims))
-        self.single_agent_obs_dim = self._single_schema[-1].stop
         self.observation_space = spaces.Box(
             low=-np.inf, high=np.inf, shape=(self.single_agent_obs_dim,), dtype=np.float32,
         )
@@ -416,23 +419,26 @@ class StarRisRsmaEnv(gym.Env):
 
     # ---------------------------------------------------------- analytical phases
     def _analytical_phases(self) -> tuple[np.ndarray, np.ndarray]:
-        """Closed-form constructive-alignment phases for the weakest R / T user.
+        """Constructive-alignment prior for the weakest R/T reference user.
 
-        Single-user alignment heuristic (not optimal for multiple users).
-        Fallback: when the reference user's direct link is numerically
-        negligible (|h_d| < analytical_phase_min_direct) its phase carries no
-        physical meaning, so the cascaded terms are aligned to a zero-phase
-        reference instead.
+        Under the stored-channel convention,
+            h_eff^H q = h_d^H q + g^H Phi G q.
+        For an equal-gain BS direction q, element n contributes
+            exp(j phi_n) * conj(g_n) * (G_n q).
+        The phase below aligns every nonzero cascaded contribution with the
+        direct received scalar h_d^H q. This is a single-user heuristic prior,
+        not an upper bound and not a multi-user optimum.
         """
+        q = np.ones(self.M, dtype=np.complex128) / math.sqrt(self.M)
+
         def _align(k: int) -> np.ndarray:
-            # MISO heuristic: align each RIS element after projecting its
-            # cascaded M-dimensional contribution onto an equal-gain BS direction.
-            cascade_scalar = np.conj(self._g[k]) * np.sum(self._G, axis=1)
-            direct_scalar = np.sum(self._h_d[k])
-            cascade_phase = np.angle(cascade_scalar)
-            if np.abs(direct_scalar) < self.analytical_min_direct:
+            direct_signal = np.vdot(self._h_d[k], q)
+            cascade_signal = np.conj(self._g[k]) * (self._G @ q)
+            cascade_phase = np.angle(cascade_signal)
+            if np.abs(direct_signal) < self.analytical_min_direct:
                 return np.mod(-cascade_phase, 2 * math.pi)
-            return np.mod(np.angle(direct_scalar) - cascade_phase, 2 * math.pi)
+            return np.mod(np.angle(direct_signal) - cascade_phase,
+                          2 * math.pi)
 
         if self.K_r > 0:
             k_R = int(np.argmin(np.linalg.norm(self._h_d[: self.K_r], axis=1)))
@@ -1179,6 +1185,12 @@ class StarRisRsmaEnv(gym.Env):
             idx += d
         assert idx == arr.size, f"Flat action length {arr.size} != expected {idx}"
         return out
+
+    def global_state(self) -> np.ndarray:
+        """Canonical centralized-critic state without duplicated local blocks."""
+        state = self._build_observation()
+        assert state.shape == (self.global_state_dim,)
+        return state
 
     def per_agent_observations(self, obs: np.ndarray = None) -> list[np.ndarray]:
         """Per-agent local observations (true CTDE) — rebuilds from current env

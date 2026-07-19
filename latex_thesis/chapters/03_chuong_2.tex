@@ -16,8 +16,8 @@ và cuối cùng là ánh xạ bài toán P0 sang quá trình ra quyết định
 
 \subsection{Mô hình hệ thống và các giả thiết}
 
-Hệ thống được xét bao gồm: một trạm gốc (BS) với $M=1$ anten (cấu hình
-SISO), một STAR-RIS với $N=32$ phần tử thụ động hoạt động ở chế độ chia
+Hệ thống được xét bao gồm: một trạm gốc (BS) với $M=4$ anten (cấu hình
+MISO), một STAR-RIS với $N=32$ phần tử thụ động hoạt động ở chế độ chia
 sẻ năng lượng (ES), và $K=4$ thiết bị người dùng (UE) được phân thành hai
 nhóm: $K_R=3$ người dùng trong vùng phản xạ R và $K_T=1$ người dùng
 trong vùng truyền qua T \cite{liu2021starris}, \cite{mu2022simultaneously}, \cite{soleymani2024starris}. Hình \ref{fig:h2_1} minh họa cấu hình hệ thống, trong đó BS đặt cố định một phía của STAR-RIS, các UE phân bố ở cả hai vùng R và T. Người dùng vùng T chịu suy hao chướng ngại $-25$ dB trên đường truyền trực tiếp, mô phỏng kịch bản NLoS điển hình nơi STAR-RIS thực sự cần thiết để cung cấp kết nối tin cậy.
@@ -25,7 +25,7 @@ trong vùng truyền qua T \cite{liu2021starris}, \cite{mu2022simultaneously}, \
 \begin{figure}[t]
   \centering
   \includegraphics[width=0.96\linewidth]{figures/h2_1_cau_hinh_he_thong.png}
-  \caption{Cấu hình hệ thống STAR-RIS hỗ trợ RSMA: BS đơn anten truyền tới
+  \caption{Cấu hình hệ thống STAR-RIS hỗ trợ RSMA: BS nhiều anten truyền tới
   $K=4$ người dùng qua STAR-RIS với $N=32$ phần tử (vùng R có 3 UE, vùng T
   có 1 UE chịu suy hao chướng ngại $-25$ dB).}
   \label{fig:h2_1}
@@ -408,8 +408,8 @@ chọn hướng tiếp cận học tăng cường sâu để giải bài toán P
 Để áp dụng DRL/MADDPG, bài toán P0 cần được ánh xạ sang một MDP với bộ năm
 $(\mathcal{S}, \mathcal{A}, \mathcal{P}, \mathcal{R}, \gamma)$ phù hợp với
 cơ chế ba tác tử chuyên dụng. Hình \ref{fig:h2_5} tóm lược ánh xạ MDP,
-trong đó không gian trạng thái 550 chiều được phân thành ba phần tương
-ứng quan sát cục bộ của từng tác tử, không gian hành động 105 chiều bao
+trong đó không gian trạng thái 1051 chiều được phân thành ba phần tương
+ứng quan sát cục bộ của từng tác tử, không gian hành động 140 chiều bao
 gồm công suất, biên độ, pha và tỷ lệ tách, còn hàm phần thưởng là
 Lagrangian surrogate giữa sum-rate và mức đáp ứng QoS. Bố cục chi tiết
 của quan sát/hành động được sinh tự động từ mã nguồn qua
@@ -417,12 +417,12 @@ của quan sát/hành động được sinh tự động từ mã nguồn qua
 (file \texttt{observation\_schema.json}), bảo đảm mô tả dưới đây khớp
 tuyệt đối với cài đặt.
 
-% LUU Y: hinh h2_5/h2_6 can ve lai theo so chieu moi (550/655) sau refactor.
+% LUU Y: hinh h2_5/h2_6 can ve lai theo so chieu MISO moi (1051/1191) sau refactor.
 \begin{figure}[t]
   \centering
   \includegraphics[width=0.96\linewidth]{figures/h2_5_mdp_anh_xa.png}
-  \caption{Ánh xạ bài toán P0 sang MDP: không gian trạng thái 550 chiều
-  (tổng quan sát cục bộ ba tác tử), không gian hành động 105 chiều,
+  \caption{Ánh xạ bài toán P0 sang MDP: không gian trạng thái 1051 chiều
+  (tổng quan sát cục bộ ba tác tử), không gian hành động 140 chiều,
   hàm phần thưởng Lagrangian surrogate với cập nhật đối ngẫu per-user.}
   \label{fig:h2_5}
 \end{figure}
@@ -431,24 +431,26 @@ tuyệt đối với cài đặt.
 
 Trạng thái tổng thể $s_t$ là phép hợp các quan sát cục bộ của ba tác tử
 $s_t = (o_{0,t}, o_{1,t}, o_{2,t})$, với tổng số chiều
-$26 + 344 + 180 = 550$ (cấu hình chuẩn $K=4$, $K_R=3$, $N=32$). Mỗi quan
-sát cục bộ bắt đầu bằng khối chung 18 chiều: phần thực và phần ảo của
-kênh hiệu dụng $h_{\text{eff},k}$ (8), vector trọng số công suất softmax
-ở bước trước (5), tỷ lệ tách ở bước trước (4) và phần thưởng bước trước
-(1). Cụ thể:
+$73 + 577 + 401 = 1051$ (cấu hình chuẩn $M=4$, $K=4$, $K_R=3$, $N=32$).
+Mỗi quan sát cục bộ bắt đầu bằng khối chung 41 chiều: phần thực và phần
+ảo của kênh hiệu dụng $\mathbf{h}_{\text{eff},k}$ (32), vector trọng số
+công suất ở bước trước (5) và tỷ lệ tách common-rate ở bước trước (4).
+Biến phần thưởng bước trước không còn nằm trong quan sát để tránh phụ
+thuộc vào hệ số đối ngẫu $\lambda$ cũ khi replay reward được tái tính.
+Cụ thể:
 
-\textbf{Tác tử BS (Agent 0, $o_0 \in \R^{26}$):} khối chung (18) cùng
-phần thực/ảo của các kênh trực tiếp $h_{d,k}$ cho cả 4 UE (8).
+\textbf{Tác tử BS (Agent 0, $o_0 \in \R^{73}$):} khối chung (41) cùng
+phần thực/ảo của các kênh trực tiếp $\mathbf{h}_{d,k}$ cho cả 4 UE (32).
 
-\textbf{Tác tử STAR-RIS Reflection (Agent 1, $o_1 \in \R^{344}$):} khối
-chung (18); phần thực/ảo của $h_{d,k}$ vùng R (6); của $\mathbf{G}$ (64);
-của $\mathbf{h}_{r,k}^R$ với $k \in \{1,2,3\}$ (192); và trạng thái
+\textbf{Tác tử STAR-RIS Reflection (Agent 1, $o_1 \in \R^{577}$):} khối
+chung (41); phần thực/ảo của $\mathbf{h}_{d,k}$ vùng R (24); của $\mathbf{G}$ (256);
+của $\mathbf{g}_{k}^R$ với $k \in \{1,2,3\}$ (192); và trạng thái
 STAR-RIS đang áp dụng: biên độ $\beta_n^R$ (32) cùng pha phản xạ hiện
 hành $\phi_n^R$ (32).
 
-\textbf{Tác tử STAR-RIS Transmission (Agent 2, $o_2 \in \R^{180}$):} khối
-chung (18); phần thực/ảo của $h_{d,4}$ (2); của $\mathbf{G}$ (64); của
-$\mathbf{h}_{r,4}^T$ (64); và 32 pha truyền qua hiện hành $\phi_n^T$.
+\textbf{Tác tử STAR-RIS Transmission (Agent 2, $o_2 \in \R^{401}$):} khối
+chung (41); phần thực/ảo của $\mathbf{h}_{d,4}$ (8); của $\mathbf{G}$ (256); của
+$\mathbf{g}_{4}^T$ (64); và 32 pha truyền qua hiện hành $\phi_n^T$.
 
 Thành phần trạng thái STAR-RIS hiện hành là cần thiết cho tính Markov
 của bài toán: chi phí tái cấu hình ở bước sau phụ thuộc cấu hình đang
@@ -456,12 +458,13 @@ của bài toán: chi phí tái cấu hình ở bước sau phụ thuộc cấu 
 
 \subsection{Không gian hành động}
 
-Tổng số chiều hành động là $9 + 64 + 32 = 105$:
+Tổng số chiều hành động là $44 + 64 + 32 = 140$:
 
-\textbf{Tác tử BS (9 chiều):} 5 đại lượng cho công suất $\{P_c, P_1, \ldots,
-P_K\}$ (qua softmax thành tỷ lệ rồi nhân với $P_{\max}$) và 4 đại lượng
-cho tỷ lệ tách $\{c_1, \ldots, c_K\}$ (qua softmax để đảm bảo
-$\sum c_k = 1$).
+\textbf{Tác tử BS (44 chiều):} 40 đại lượng phần thực/ảo của beamformer
+phức cho common stream và 4 private streams, được chiếu chung lên quả cầu
+công suất BS; 4 đại lượng còn lại tạo tỷ lệ tách $\{c_1,\ldots,c_K\}$ bằng
+inverse-tanh logits rồi softmax để đảm bảo $\sum c_k = 1$ và vẫn tiếp cận
+tốt biên simplex.
 
 \textbf{Tác tử RIS-R (64 chiều), theo đúng thứ tự trong cài đặt:} 32 đại
 lượng biên độ phản xạ $\{\beta_n^R\}_{n=1}^{N}$ (ánh xạ tuyến tính từ

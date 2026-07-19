@@ -11,7 +11,7 @@
 Số người dùng tổng ($K$) & 4 \\
 Số người dùng vùng phản xạ ($K_R$) & 3 \\
 Số phần tử STAR-RIS ($N$) & 32 \\
-Số anten BS ($M$) & 1 \\
+Số anten BS ($M$) & 4 \\
 Công suất phát tối đa $P_{\max}$ & $30$ dBm \\
 Công suất tạp âm $\sigma^2$ & $-90$ dBm \\
 QoS tối thiểu $R_{\min}$ & $0{,}3$ b/s/Hz \\
@@ -29,11 +29,11 @@ $\lambda_k$ ban đầu / miền chiếu & $1{,}0$ / $[0,\,20]$ \\
 Tốc độ học đối ngẫu $\eta_\lambda$ / EMA & $0{,}01$ / $0{,}9$ \\
 Tỷ lệ đóng băng $\lambda$ ($\rho_f$) & $0{,}55$ \\
 Trọng số switching cost $\eta_\phi/\eta_P/\eta_\beta$ & $0{,}1$ / $0{,}05$ / $0{,}05$ \\
-Biên độ residual pha & $\pm\pi/4$ \\
+Ánh xạ pha mặc định & Pha tuyệt đối, $\phi_n=\pi(a_n+1)$ \\
 \midrule
 \multicolumn{2}{l}{\textbf{Tham số huấn luyện}} \\
 Số episode mỗi thuật toán & $2\,000$ \\
-Số hạt giống huấn luyện & $8$ (cấu hình chuẩn) / $10$ (sweep $N$) \\
+Số hạt giống huấn luyện & $8$ (cấu hình chuẩn và sweep $N$) \\
 Hạt giống validation / test (khóa) & $[11,\ldots,55]$ / $[70001,\ldots,70005]$ \\
 Nguồn seed split / SHA-256 & \texttt{seed\_split.v1.yaml} / \texttt{d73ba5aea6d0\ldots f118854} \\
 Số bước warmup ngẫu nhiên & $5\,000$ \\

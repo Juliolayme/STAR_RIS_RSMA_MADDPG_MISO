@@ -50,9 +50,9 @@ def test_reward_computed_on_observed_channel_then_evolve():
     # decoded action (fixed RIS: beta=0.5, phases=0; equal power).
     beta = 0.5 * np.ones(env.N)
     coeff = np.sqrt(beta)  # phases are zero
-    # MISO cascade: h_eff,k = h_d,k + sum_n conj(g_k[n]) * coeff_n * G[n, :].
+    # Stored MISO convention: h_eff,k^H w = h_d,k^H w + g_k^H Phi_k G w.
     h_eff_manual = np.array([
-        h_d_pre[k] + np.sum((np.conj(g_pre[k]) * coeff)[:, None] * G_pre, axis=0)
+        h_d_pre[k] + np.sum(np.conj(G_pre) * (np.conj(coeff) * g_pre[k])[:, None], axis=0)
         for k in range(env.K)])
     P_c = env.p_max / (env.K + 1)
     P_k = np.full(env.K, env.p_max / (env.K + 1))

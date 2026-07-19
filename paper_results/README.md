@@ -1,26 +1,19 @@
-# Paper results — dữ liệu chứng minh số liệu trong luận văn
+# Paper results snapshot - historical only
 
-Các CSV tổng hợp (aggregated) sinh bởi `main.py --aggregate-only --final-paper`
-từ các shard huấn luyện trên Kaggle. Mỗi `run_meta.json` ghi `source_sha`
-(hash cây nguồn) khớp tag `paper-freeze-v1` (`b83e6976…`), `config_sha`, danh
-sách seed và môi trường chạy — bảo đảm số liệu tái lập được từ đúng bản mã đã khóa.
+This directory is retained for audit/reference, but the CSV files must not be
+reported as final MISO/Q1 evidence.
 
-## main_N32/ — thí nghiệm chính (5 thuật toán × 8 seed, N=32)
-- `algorithm_comparison.csv` — sum-rate, QoS, R_c, P_c/Pmax mỗi thuật toán
-- `significance.csv` — paired t-test + Holm (MADDPG vs TD3/TD3-Matched/DDPG/PPO)
-- `latency_cpu.csv` — độ trễ suy luận CPU một luồng (2000 lần gọi)
-- `ablation.csv` — loại trừ STAR-RIS / công suất
-- `sumrate_vs_power.csv` — quét P_max
-- `model_complexity.csv` — số tham số (MADDPG vs TD3-Matched khớp)
-- `ao_local_search*.csv` — mốc tham chiếu Hybrid AO Local Search
-- `results_raw.csv` — dữ liệu thô (tidy) mọi metric/seed/scenario
-- `completed_runs.csv`, `run_meta.json` — provenance
+The current source uses the MISO STAR-RIS RSMA model (`M=4` by default), while
+parts of this snapshot were produced by an older source tree and/or SISO
+configuration. Treat every table and figure derived from this directory as
+historical until the full MISO experiment matrix is rerun from a frozen commit
+and verified by `source_sha`, `config_sha`, and locked validation/test banks.
 
-## scalability/ — quét N ∈ {16,32,64,96,128} (MADDPG vs TD3 × 8 seed)
-- `scalability_summary.csv` — bảng tổng: sum-rate + p_Holm theo N (kết luận: tương đương mọi N)
-- `N<N>/` — algorithm_comparison, significance, provenance mỗi N
+Required before using this directory for a paper/thesis result:
 
-## Kết luận chính (trung thực)
-MADDPG **tương đương thống kê** với TD3/TD3-Matched ở mọi N (p_Holm ≥ 0,53),
-chỉ vượt PPO có ý nghĩa; không tìm thấy lợi thế phân rã đa tác tử. Chi tiết
-trong `latex_thesis/` (Chương 4 + Kết luận).
+- rerun all primary algorithms on the frozen MISO source;
+- verify all 40 primary algorithm-seed shards are present;
+- regenerate aggregation, significance, latency, complexity and scalability
+  tables from those shards;
+- report MADDPG vs TD3/TD3-Matched only according to paired tests with Holm
+  correction.

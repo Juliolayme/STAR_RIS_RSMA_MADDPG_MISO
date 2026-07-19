@@ -1,14 +1,10 @@
-"""Generate the golden regression fixture from the PRE-REFACTOR (v14) environment.
+"""Generate the golden regression fixture for the current MISO environment.
 
-This script must be run exactly once against the ORIGINAL implementation, BEFORE
-any refactoring. It records PHYSICS-ONLY outputs (channels, effective channels,
-RSMA rates) for fixed seeds and a fixed action sequence. Rewards, observations
-and QoS penalty terms are intentionally NOT recorded because they change by
-design in the refactor.
-
-After the refactor, tests/test_legacy_regression.py replays the same seeds and
-actions through env_formulation="static_block" and asserts the physics outputs
-match this fixture within dtype-aware tolerances.
+It records PHYSICS-ONLY outputs (channels, effective channels, RSMA rates) for
+fixed seeds and a fixed action sequence. Rewards, observations and QoS penalty
+terms are intentionally NOT recorded because those are algorithmic surfaces.
+tests/test_legacy_regression.py replays the same seeds and actions through
+env_formulation="static_block" and asserts the MISO physical layer stays stable.
 
 Fixture metadata (source version, config, library versions, date) is stored in
 the .npz and in a JSON sidecar for auditability.
@@ -32,7 +28,7 @@ from env import StarRisRsmaEnv  # noqa: E402
 def _base_cfg(n_elements: int, num_users: int, k_r: int,
               max_steps: int, block_steps: int) -> dict:
     return {
-        "num_bs_antennas": 1,
+        "num_bs_antennas": 4,
         "num_users": num_users,
         "num_users_reflection": k_r,
         "num_ris_elements": n_elements,
@@ -52,6 +48,7 @@ def _base_cfg(n_elements: int, num_users: int, k_r: int,
         "ris_position": [50.0, 0.0, 10.0],
         "user_area_reflection": [[35.0, 50.0], [-10.0, 10.0], [1.5, 1.5]],
         "user_area_transmission": [[55.0, 75.0], [-10.0, 10.0], [1.5, 1.5]],
+        "env_formulation": "static_block",
         "max_steps": max_steps,
         "channel_block_steps": block_steps,
         # Physics-neutral action decoding: absolute phase mapping so the fixture
@@ -62,6 +59,7 @@ def _base_cfg(n_elements: int, num_users: int, k_r: int,
         "obs_include_channel_state": True,
         "local_obs_for_maddpg": True,
         "epsilon": 1.0e-12,
+        "obs_include_ris_state": True,
     }
 
 
@@ -119,7 +117,7 @@ def main():
     os.makedirs(fixture_dir, exist_ok=True)
     arrays: dict[str, np.ndarray] = {}
     meta = {
-        "source": "pre-refactor v14 implementation (env/star_ris_env.py)",
+        "source": "current MISO implementation (env/star_ris_env.py)",
         "generated": str(date.today()),
         "python": sys.version,
         "numpy": np.__version__,

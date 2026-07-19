@@ -1,14 +1,14 @@
 {
-  "source": "pre-refactor v14 implementation (env/star_ris_env.py)",
-  "generated": "2026-07-15",
-  "python": "3.10.11 (tags/v3.10.11:7d4cc5a, Apr  5 2023, 00:38:17) [MSC v.1929 64 bit (AMD64)]",
+  "source": "current MISO implementation (env/star_ris_env.py)",
+  "generated": "2026-07-19",
+  "python": "3.12.13 (main, Mar  3 2026, 15:35:03) [Clang 21.1.4 ]",
   "numpy": "2.2.6",
-  "platform": "Windows-10-10.0.26100-SP0",
+  "platform": "macOS-26.3.1-arm64-arm-64bit",
   "cases": [
     {
       "name": "case_block_full",
       "config": {
-        "num_bs_antennas": 1,
+        "num_bs_antennas": 4,
         "num_users": 4,
         "num_users_reflection": 3,
         "num_ris_elements": 8,
@@ -62,13 +62,15 @@
             1.5
           ]
         ],
+        "env_formulation": "static_block",
         "max_steps": 10,
         "channel_block_steps": 10,
         "phase_action_mode": "absolute",
         "equal_power_mode": false,
         "obs_include_channel_state": true,
         "local_obs_for_maddpg": true,
-        "epsilon": 1e-12
+        "epsilon": 1e-12,
+        "obs_include_ris_state": true
       },
       "env_seed": 123,
       "reset_seed": 456,
@@ -77,7 +79,7 @@
     {
       "name": "case_block_3",
       "config": {
-        "num_bs_antennas": 1,
+        "num_bs_antennas": 4,
         "num_users": 4,
         "num_users_reflection": 3,
         "num_ris_elements": 16,
@@ -131,13 +133,15 @@
             1.5
           ]
         ],
+        "env_formulation": "static_block",
         "max_steps": 9,
         "channel_block_steps": 3,
         "phase_action_mode": "absolute",
         "equal_power_mode": false,
         "obs_include_channel_state": true,
         "local_obs_for_maddpg": true,
-        "epsilon": 1e-12
+        "epsilon": 1e-12,
+        "obs_include_ris_state": true
       },
       "env_seed": 321,
       "reset_seed": 654,
@@ -146,7 +150,7 @@
     {
       "name": "case_k2",
       "config": {
-        "num_bs_antennas": 1,
+        "num_bs_antennas": 4,
         "num_users": 2,
         "num_users_reflection": 1,
         "num_ris_elements": 8,
@@ -200,13 +204,15 @@
             1.5
           ]
         ],
+        "env_formulation": "static_block",
         "max_steps": 6,
         "channel_block_steps": 6,
         "phase_action_mode": "absolute",
         "equal_power_mode": false,
         "obs_include_channel_state": true,
         "local_obs_for_maddpg": true,
-        "epsilon": 1e-12
+        "epsilon": 1e-12,
+        "obs_include_ris_state": true
       },
       "env_seed": 111,
       "reset_seed": 222,

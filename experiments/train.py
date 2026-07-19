@@ -109,6 +109,15 @@ def _make_env(cfg: dict, seed: int, ris_mode: str = "optimized",
     return env
 
 
+def _with_qos_penalty_disabled(cfg: dict) -> dict:
+    cfg2 = {**cfg, "env": dict(cfg["env"])}
+    cfg2["env"]["qos_lambda_init"] = 0.0
+    cfg2["env"]["dual_lambda_max"] = 0.0
+    cfg2["env"]["augmented_penalty_weight"] = 0.0
+    cfg2["env"]["enable_qos_shaping_bonus"] = False
+    return cfg2
+
+
 def _action_stats(action_arr: np.ndarray) -> dict:
     a = np.asarray(action_arr).reshape(-1)
     return {
@@ -394,10 +403,7 @@ def train_maddpg(cfg: dict, total_episodes: int | None = None,
     device = _select_device(cfg.get("device", "auto"))
     cfg2 = dict(cfg)
     if disable_qos_penalty:
-        cfg2 = {**cfg, "env": dict(cfg["env"])}
-        cfg2["env"]["qos_lambda_init"] = 0.0
-        cfg2["env"]["dual_lambda_max"] = 0.0
-        cfg2["env"]["enable_qos_shaping_bonus"] = False
+        cfg2 = _with_qos_penalty_disabled(cfg)
     env = _make_env(cfg2, seed, ris_mode=ris_mode)
     spec = env.spec()
     agent = MADDPG(spec,
@@ -451,12 +457,13 @@ def train_maddpg(cfg: dict, total_episodes: int | None = None,
         for t in range(env.max_steps):
             actions = agent.select_actions(per_agent_obs, explore=True)
             next_obs, reward, term, trunc, info = env.step(actions)
-            done = term or trunc
+            episode_done = term or trunc
+            bootstrap_done = term
             if not math.isfinite(reward):
                 logger.buffer("nan_reward_count", 1.0)
                 continue
             next_per_agent = env.per_agent_observations()   # RAW
-            agent.add_transition(per_agent_obs, actions, reward, next_per_agent, float(done),
+            agent.add_transition(per_agent_obs, actions, reward, next_per_agent, float(bootstrap_done),
                                  base_reward=info["base_reward"],
                                  c_gap=info["qos_constraint_signed"])
             agent.increment_step()
@@ -474,7 +481,7 @@ def train_maddpg(cfg: dict, total_episodes: int | None = None,
             ep_return += reward
             per_agent_obs = next_per_agent
             steps += 1
-            if done:
+            if episode_done:
                 break
 
         ep_summary = _summarize(buf)
@@ -569,10 +576,7 @@ def train_single_agent(cfg: dict, kind: str, total_episodes: int | None = None,
     device = _select_device(cfg.get("device", "auto"))
     cfg2 = cfg
     if disable_qos_penalty:
-        cfg2 = {**cfg, "env": dict(cfg["env"])}
-        cfg2["env"]["qos_lambda_init"] = 0.0
-        cfg2["env"]["dual_lambda_max"] = 0.0
-        cfg2["env"]["enable_qos_shaping_bonus"] = False
+        cfg2 = _with_qos_penalty_disabled(cfg)
     env = _make_env(cfg2, seed)
     obs_dim = env.observation_space.shape[0]
     act_dim = env.action_space.shape[0]
@@ -621,11 +625,12 @@ def train_single_agent(cfg: dict, kind: str, total_episodes: int | None = None,
         for t in range(env.max_steps):
             action = agent.select_action(obs, explore=True)
             next_obs, reward, term, trunc, info = env.step(action)
-            done = term or trunc
+            episode_done = term or trunc
+            bootstrap_done = term
             if not math.isfinite(reward):
                 logger.buffer("nan_reward_count", 1.0)
                 continue
-            agent.add_transition(obs, action, reward, next_obs, float(done),
+            agent.add_transition(obs, action, reward, next_obs, float(bootstrap_done),
                                  base_reward=info["base_reward"],
                                  c_gap=info["qos_constraint_signed"])
             agent.increment_step()
@@ -642,7 +647,7 @@ def train_single_agent(cfg: dict, kind: str, total_episodes: int | None = None,
             ep_return += reward
             obs = next_obs
             steps += 1
-            if done:
+            if episode_done:
                 break
 
         ep_summary = _summarize(buf)
@@ -761,13 +766,14 @@ def train_ppo(cfg: dict, total_episodes: int | None = None,
         for t in range(env.max_steps):
             action, log_prob, value = agent.select_action(obs, explore=True)
             next_obs, reward, term, trunc, info = env.step(action)
-            done = term or trunc
+            episode_done = term or trunc
+            bootstrap_done = term
             if not math.isfinite(reward):
                 logger.buffer("nan_reward_count", 1.0)
                 continue
             # Store the EXACT normalized observation used to compute log_prob/
             # value (item 2), not the raw observation.
-            agent.store(agent.last_norm_obs, action, log_prob, reward, value, float(done))
+            agent.store(agent.last_norm_obs, action, log_prob, reward, value, float(bootstrap_done))
             rollout_c_sum += np.asarray(info["qos_constraint_signed"], dtype=np.float64)
             rollout_c_cnt += 1
             total_env_steps += 1
@@ -781,15 +787,15 @@ def train_ppo(cfg: dict, total_episodes: int | None = None,
             obs = next_obs
             steps += 1
             if agent.buffer_full():
-                last_v = 0.0 if done else agent.value(obs)
+                last_v = 0.0 if bootstrap_done else agent.value(obs)
                 losses = agent.learn(last_v)     # lambda fixed for this batch
                 for k, v in losses.items():
                     logger.buffer(k, v)
                 _apply_dual_after_rollout(ep)     # update lambda AFTER the batch
-            if done:
+            if episode_done:
                 break
         if agent.rollout.size > 0 and (ep == total_episodes - 1 or agent.buffer_full()):
-            last_v = 0.0 if (term or trunc) else agent.value(obs)
+            last_v = 0.0 if term else agent.value(obs)
             losses = agent.learn(last_v)
             for k, v in losses.items():
                 logger.buffer(k, v)

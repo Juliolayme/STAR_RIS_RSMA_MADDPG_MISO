@@ -3,11 +3,13 @@ __pycache__/
 *.pyc
 .ipynb_checkpoints/
 .pytest_cache/
+.venv/
 
 # Generated run artifacts -- must NOT ship in the release ZIP (item 14).
 # Every pipeline run writes into a config-hash/timestamp subdirectory; results,
 # logs and (large) resumable checkpoints are reproducible from source + config.
 results_revised/
+smoke_runs/
 logs/
 logs_smoke/
 logs_pilot/

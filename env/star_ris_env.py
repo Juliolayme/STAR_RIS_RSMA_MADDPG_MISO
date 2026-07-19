@@ -11,7 +11,9 @@ System model
 - STAR-RIS coefficients per element n (ideal independent-phase ES model):
      beta_n^r, beta_n^t in [0, 1] with beta_n^r + beta_n^t = 1
      phi_n^r, phi_n^t in [0, 2pi)
-- Effective channel:  h_eff,k = h_dk + G^T * Phi_k^H * g_k*   in C^{M}.
+- Effective channel is stored as h_eff,k in C^M such that the scalar received
+  channel is h_eff,k^H w = h_dk^H w + g_k^H Phi_k G w. Equivalently,
+  h_eff,k = h_dk + G^H Phi_k^H g_k.
 
 Environment formulations (config key `env_formulation`)
 --------------------------------------------------------
@@ -69,7 +71,7 @@ Action mapping (per agent, networks output in [-1, 1])
 Agent 0 (BS beamformer):  size = 2*M*(K + 1) + K
     - first 2*M*(K+1): Re/Im of the common and K private MISO beamformers,
       jointly projected onto the BS power ball (||W||_F^2 = P_max)
-    - next K: softmax-derived common-stream split c_k
+    - next K: inverse-tanh logits followed by softmax for common-stream split c_k
 Agent 1 (STAR-RIS reflection):    size = 2N   -- ORDER: [beta_r (N), phi_r (N)]
 Agent 2 (STAR-RIS transmission):  size = N    -- [phi_t (N)]
 Use `action_schema()` / `observation_schema()` for the authoritative layout.
@@ -117,7 +119,7 @@ def _softmax(x: np.ndarray, axis: int = -1) -> np.ndarray:
 
 
 class StarRisRsmaEnv(gym.Env):
-    """Gymnasium-compatible multi-agent friendly env for STAR-RIS RSMA SISO."""
+    """Gymnasium-compatible multi-agent friendly env for STAR-RIS RSMA MISO."""
     metadata = {"render_modes": ["human"], "render_fps": 4}
 
     def __init__(self, cfg: dict, seed: int | None = None,
@@ -226,6 +228,7 @@ class StarRisRsmaEnv(gym.Env):
         # Physics-informed phase action: "absolute" or "residual".
         self.phase_action_mode = str(cfg.get("phase_action_mode", "absolute")).lower()
         self.phase_residual_scale = float(cfg.get("phase_residual_scale", 0.3))
+        self.common_split_logit_scale = float(cfg.get("common_split_logit_scale", 1.0))
         # Below this direct-link amplitude the analytical prior aligns the
         # cascaded terms to a zero-phase reference instead of the (numerically
         # meaningless) phase of a vanishing h_d.
@@ -531,7 +534,10 @@ class StarRisRsmaEnv(gym.Env):
         P_c = float(powers[0])
         P_k = powers[1:]
         cs_logits = a_bs[n_bf:]
-        common_split = _softmax(2.0 * cs_logits)
+        cs_logits = self.common_split_logit_scale * np.arctanh(
+            np.clip(cs_logits, -1.0 + 1e-6, 1.0 - 1e-6)
+        )
+        common_split = _softmax(cs_logits)
 
         # ORDER: [beta_r (N), phi_r (N)] -- see action_schema().
         a_ris_r = np.clip(a_ris_r, -1.0, 1.0)
@@ -605,7 +611,10 @@ class StarRisRsmaEnv(gym.Env):
                 cascaded = np.zeros(self.M, dtype=np.complex128)
             else:
                 coeff = coeff_r if k < self.K_r else coeff_t
-                cascaded = np.sum((np.conj(self._g[k]) * coeff)[:, None] * self._G, axis=0)
+                cascaded = np.sum(
+                    np.conj(self._G) * (np.conj(coeff) * self._g[k])[:, None],
+                    axis=0,
+                )
             h_ris[k] = cascaded
             h_eff[k] = self._h_d[k] + cascaded
         self._h_ris = h_ris
@@ -697,7 +706,6 @@ class StarRisRsmaEnv(gym.Env):
             ("h_eff_im", K * M, "Im(h_eff) per user, scaled by mean R-region direct gain"),
             ("prev_power_weights", K + 1, "previous softmax power weights [common, p_1..p_K]"),
             ("prev_common_split", K, "previous common-rate split c_k"),
-            ("prev_reward", 1, "previous scalar reward"),
         ]
         chan_all = [
             ("h_d_re", K * M, "Re(h_d) all users, normalised by alpha_d"),
@@ -760,7 +768,7 @@ class StarRisRsmaEnv(gym.Env):
         self._act_schema = [
             build([
                 ("beamformers_complex", 2 * M * (K + 1), "Re/Im of common and K private MISO beamformers, jointly power-normalized"),
-                ("common_split_logits", K, "softmax logits for common-rate split c_k"),
+                ("common_split_logits", K, "inverse-tanh logits followed by softmax for common-rate split c_k"),
             ]),
             build([
                 ("beta_r", N, "beta_r = (a+1)/2 clipped to [1e-4, 1-1e-4]; beta_t = 1 - beta_r"),
@@ -807,8 +815,7 @@ class StarRisRsmaEnv(gym.Env):
             else np.ones(self.K + 1, dtype=np.float32) / (self.K + 1)
         cs = self._prev_common_split if self._prev_common_split is not None \
             else np.ones(self.K, dtype=np.float32) / self.K
-        prev_r = np.array([self._prev_reward], dtype=np.float32)
-        return [re, im, pw.astype(np.float32), cs.astype(np.float32), prev_r]
+        return [re, im, pw.astype(np.float32), cs.astype(np.float32)]
 
     def _ris_state_parts(self, which: str) -> list[np.ndarray]:
         beta = self._beta_r if self._beta_r is not None else 0.5 * np.ones(self.N)
@@ -1157,8 +1164,7 @@ class StarRisRsmaEnv(gym.Env):
 
     def render(self):
         h = self._h_eff if self._h_eff is not None else np.zeros(self.K, dtype=complex)
-        print(f"step={self._step_count}  |h_eff|^2={np.abs(h)**2}  "
-              f"prev_reward={self._prev_reward:.3f}")
+        print(f"step={self._step_count}  |h_eff|^2={np.abs(h)**2}")
 
     # ------------------------------------------------------------------ helpers
     def _split_action(self, action) -> list[np.ndarray]:

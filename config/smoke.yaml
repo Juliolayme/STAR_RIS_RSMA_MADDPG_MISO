@@ -64,6 +64,7 @@ env:
   equal_power_mode: false
   phase_action_mode: "absolute"
   phase_residual_scale: 0.25
+  common_split_logit_scale: 1.0
   analytical_phase_min_direct: 1.0e-9
 
   obs_include_channel_state: true

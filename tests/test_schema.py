@@ -41,6 +41,14 @@ def test_action_order_beta_then_phase_for_ris_r():
     assert fields[1]["name"] == "phi_r" and fields[1]["start"] == env.N
 
 
+def test_observation_schema_excludes_prev_reward():
+    env = StarRisRsmaEnv(base_env_cfg(), seed=1)
+    names = [f["name"] for f in env.observation_schema()["single_agent"]]
+    assert "prev_reward" not in names
+    for fields in env.observation_schema()["agents"]:
+        assert "prev_reward" not in [f["name"] for f in fields]
+
+
 def test_export_schema_json(tmp_path):
     env = StarRisRsmaEnv(base_env_cfg(), seed=1)
     obs_p = os.path.join(tmp_path, "observation_schema.json")

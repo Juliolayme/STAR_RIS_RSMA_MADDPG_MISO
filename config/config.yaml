@@ -101,6 +101,10 @@ env:
   # "residual":  phi_n = analytical_prior + scale*pi*action
   phase_action_mode: "absolute"
   phase_residual_scale: 0.25
+  # Common-rate split mapping: actor outputs in [-1, 1] are converted with
+  # atanh(action) before softmax, so policies can approach simplex boundaries
+  # when one user needs nearly all common rate.
+  common_split_logit_scale: 1.0
   # Analytical prior fallback: below this direct-link amplitude the cascaded
   # terms are aligned to a zero-phase reference (the phase of a vanishing
   # h_d is numerically meaningless).

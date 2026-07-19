@@ -1,16 +1,22 @@
-# Kế hoạch train song song trên Kaggle — MISO/Q1 (40 shards)
+# Kế hoạch train song song trên Kaggle — Structured-BS V2 (40 shards)
 
 Ma trận: 5 thuật toán × 8 seeds = **40 shards**, mỗi shard là một job
 `--train-only` độc lập (2000 episodes). Gộp bằng `--aggregate-only --final-paper`
 (bắt buộc đủ 40 cặp, cùng `source_sha`).
 
+> Đây là **method mới** `structured_bs_v2` — KHÔNG trộn với bất kỳ shard nào của
+> raw-complex/Q1 cũ (source_sha khác nhau, action-dim khác nhau; aggregator sẽ
+> từ chối). Locked test seeds v2: `[81011, 81023, 81041, 81071, 81101]`.
+
 ## Nguồn đã freeze
 
-- Commit: `a8f636f` (nhánh `main` / `agent/miso-q1-hardening`)
-- `source_tree_sha256` = `2cb81296b206e92483347ede709ad4e53e5fa72182e05842d57083b7a0ac668c`
+- Nhánh: `agent/structured-bs-v2`
+- `source_tree_sha256` = `a363f99a6300cc698dcb581f17fb3479b408e3b454043913e261e5e5de0442e2`
   — notebook tự verify trước khi chạy, sai là dừng ngay.
-- Source đóng gói: `star_ris_miso_src_a8f636f.zip` (upload làm Kaggle Dataset
-  `star-ris-miso-src`, dùng chung cho mọi session/account).
+- effective config SHA-256 = `7e9ef64bcb2f19d324c70a9d69492fb1c3e7b034cf8b28023f7e421f127936b3`
+- seed_split.v2 SHA-256 = `dc327042efcad7007efa0006f0b10461eb69055992a3cdcd6416612d15db13e8`
+- Source đóng gói: `star_ris_miso_src_v2_a363f99.zip` (upload làm Kaggle Dataset
+  `star-ris-miso-v2-src`, dùng chung cho mọi session/account).
 
 ## Quỹ thời gian
 
@@ -39,27 +45,27 @@ MADDPG chậm nhất (3 critic + 3 actor), xếp ít shard hơn mỗi phiên:
 | acc3-A | `ddpg:5000 ddpg:6000 ddpg:7000 ddpg:8000 ppo:1000 ppo:2000` |
 | acc3-B | `ppo:3000 ppo:4000 ppo:5000 ppo:6000 ppo:7000 ppo:8000` |
 
-Quy tắc: `RUN_ID = "miso_q1"` giữ nguyên ở MỌI phiên; mỗi cặp algo:seed chỉ
+Quy tắc: `RUN_ID = "miso_v2"` giữ nguyên ở MỌI phiên; mỗi cặp algo:seed chỉ
 được có ĐÚNG MỘT zip khi aggregate (chạy lại thì bỏ zip hỏng cũ).
 
 ## Quy trình từng phiên (push-button)
 
 1. Tạo notebook mới từ `kaggle/kaggle_shard_runner.ipynb`; Add Input dataset
-   `star-ris-miso-src`; Accelerator GPU; Internet On; Environment "Pin to
+   `star-ris-miso-v2-src`; Accelerator GPU; Internet On; Environment "Pin to
    original" (cả 6 phiên cùng docker image để môi trường đồng nhất).
 2. Sửa Ô THAM SỐ: dán chuỗi `SHARDS` của phiên đó. Save & Run All (Commit) —
    notebook chạy nền trên server Kaggle, KHÔNG cần giữ trình duyệt.
-3. Xong phiên: vào tab Output, tải các file `miso_q1__<algo>_seed<seed>.zip`
+3. Xong phiên: vào tab Output, tải các file `miso_v2__<algo>_seed<seed>.zip`
    (vài MB/shard — KHÔNG tải gì khác; latest.pt và replay đã bị loại từ đầu).
 4. Ghi lại dòng "CHƯA CHẠY" cuối log (nếu có) → nối vào SHARDS phiên kế.
 
 ## Gộp kết quả (sau khi đủ 40 zip)
 
-1. Upload đủ 40 zip làm Dataset `miso-q1-shards`.
+1. Upload đủ 40 zip làm Dataset `miso-v2-shards`.
 2. Chạy `kaggle/kaggle_aggregate.ipynb` (CPU là đủ) với 2 dataset input.
    `--final-paper` sẽ TỰ TỪ CHỐI nếu thiếu/thừa/trùng cặp algo-seed hoặc
    source_sha không đồng nhất.
-3. Tải về duy nhất `miso_q1_final_results.zip` (tables/ figures/
+3. Tải về duy nhất `miso_v2_final_results.zip` (tables/ figures/
    results_summary.md, provenance — không kèm npz nặng).
 
 ## Nội dung một shard zip (đã kiểm chứng end-to-end)

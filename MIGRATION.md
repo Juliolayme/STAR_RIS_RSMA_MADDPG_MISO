@@ -36,7 +36,7 @@ Che do cu van tai lap duoc voi `env_formulation: static_block`
 | (khong co) | `augmented_penalty_weight` (w; ten tranh nham voi channel_rho) |
 | (khong co) | `phase_switching_cost`, `power_switching_cost`, `beta_switching_cost` |
 | (khong co) | `obs_include_ris_state`, `obs_norm_freeze_after_env_steps`, `analytical_phase_min_direct`, `star_ris_hardware_model` |
-| `evaluation.seeds` | `config/seed_split.v1.yaml` (validation 11..55; 9101..9505 la legacy da bi xem; locked final test 70001..70005), verified by the SHA-256 registered in `config/config.yaml` |
+| `evaluation.seeds` | `config/seed_split.v2.yaml` (validation 11..55; 9101..9505 la legacy da bi xem; opened v1 test 70001..70005; fresh locked v2 test 81011,81023,81041,81071,81101), verified by the SHA-256 registered in `config/config.yaml` |
 | (khong co) | `training.model_select_constraint_tolerance`, `evaluation.ao_local_search_max_n` |
 
 ## 3. Metric: cu -> moi

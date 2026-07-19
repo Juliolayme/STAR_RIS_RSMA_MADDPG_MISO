@@ -26,6 +26,9 @@ _KIND_ALIAS = {
     "FixedRIS": "maddpg", "RandomRIS": "maddpg", "NoRIS": "maddpg",
     "AnalyticalRIS": "maddpg", "AO-Grid": "maddpg", "BCD": "maddpg",
     "EqualPowerLearned": "maddpg", "EqualPowerFixed": "maddpg",
+    "EqualPowerOnly": "maddpg", "MRTDirectionsOnly": "maddpg",
+    "UniformCommonSplitOnly": "maddpg",
+    "ClassicalMRTEqualPowerFixed": "maddpg",
     "NoQoSPenalty": "maddpg", "NoRewardNorm": "maddpg",
 }
 
@@ -37,7 +40,8 @@ def kind_of(algo_label: str) -> str:
 def eval_on_scenarios(agent, algo_label: str, cfg: dict, scenarios: list[dict],
                       ris_mode: str = "optimized", equal_power: bool = False,
                       qos_lambda: float | None = None,
-                      qos_lambda_vec=None) -> dict:
+                      qos_lambda_vec=None,
+                      env_overrides: dict | None = None) -> dict:
     """Evaluate one agent deterministically on a fixed scenario list.
 
     Every method sees the identical geometry + channel trajectory per
@@ -46,7 +50,8 @@ def eval_on_scenarios(agent, algo_label: str, cfg: dict, scenarios: list[dict],
     return evaluate_agent(env_cfg=cfg, agent=agent, kind=kind_of(algo_label),
                           scenarios=scenarios, ris_mode=ris_mode,
                           equal_power=equal_power, qos_lambda=qos_lambda,
-                          qos_lambda_vec=qos_lambda_vec)
+                          qos_lambda_vec=qos_lambda_vec,
+                          env_overrides=env_overrides)
 
 
 def scenario_rows(algo_label: str, metrics: dict, scenarios: list[dict],

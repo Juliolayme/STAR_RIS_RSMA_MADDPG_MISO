@@ -7,15 +7,13 @@ checklist nay hoan tat.
 
 ## 0. Quy tac bat di bat doi (EXPERIMENT PROTOCOL)
 
-1. `config/seed_split.v1.yaml` la nguon duy nhat cho seed split; SHA-256 bat
-   buoc la `d73ba5aea6d037570f2634cbc87175db259a6e91f0fecee74519eecd1f118854`.
+1. `config/seed_split.v2.yaml` la nguon duy nhat cho seed split; SHA-256 bat
+   buoc la `dc327042efcad7007efa0006f0b10461eb69055992a3cdcd6416612d15db13e8`.
    Loader se dung ngay neu file va hash khong khop.
 2. Tune sieu tham so CHI bang validation scenarios [11, 22, 33, 44, 55].
    Tap legacy [9101, 9202, 9303, 9404, 9505] da bi xem trong qua trinh phat
    trien va KHONG phai final test.
-3. Locked final-test scenarios [70001, 70002, 70003, 70004, 70005] chi duoc
-   tao/chay sau khi code va config da khoa; bao cao dung ket qua thu duoc, ke ca
-   khi khong nhu ky vong.
+3. Tap v1 [70001, 70002, 70003, 70004, 70005] da bi mo khi chan doan raw-complex BS va chi la historical diagnostic. Locked v2 [81011, 81023, 81041, 81071, 81101] CHUA duoc mo; chi tao/chay sau khi code, config va protocol Structured-BS V2 da khoa, va phai bao cao dung ket qua thu duoc.
 4. KHONG bao gio: chinh tham so sau khi xem ket qua test roi chay lai test;
    dat dieu kien "learned phai thang analytical"; chon checkpoint theo test.
 5. Luu lai moi lan tune (config + validation score) vao tuning_history.csv
@@ -94,10 +92,9 @@ Dan so lieu vao luan van:
 
 Notebook: `notebooks/star_ris_rsma_scalability_N.ipynb`
 
-- [ ] N in {16, 32, 64, 96, 128}: train {maddpg, td3} x 8 seeds moi N.
-- [ ] scalability_runs/scalability_summary.csv: MADDPG vs TD3 paired t +
-      Holm theo N.
-- [ ] Chi giu cau "MADDPG vuot TD3 tu N>=64" neu p_holm < 0.05 tai cac N do;
+- [ ] N in {16, 32, 64, 96, 128}: train {maddpg, td3_matched} x 8 seeds moi N (TD3 thuong la secondary).
+- [ ] scalability_runs/scalability_summary.csv: MADDPG vs TD3-Matched paired t/permutation + Holm theo N.
+- [ ] Chi giu cau "MADDPG vuot TD3-Matched tu N>=64" neu p_holm < 0.05 tai cac N do;
       tai N=32 giu "tuong duong thong ke".
 
 ## 5. AO references + feasibility

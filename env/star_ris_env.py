@@ -68,10 +68,15 @@ QoS metrics reported in `info` (explicit names, no ambiguous aliases):
 
 Action mapping (per agent, networks output in [-1, 1])
 ------------------------------------------------------
-Agent 0 (BS beamformer):  size = 2*M*(K + 1) + K
-    - first 2*M*(K+1): Re/Im of the common and K private MISO beamformers,
-      jointly projected onto the BS power ball (||W||_F^2 = P_max)
-    - next K: inverse-tanh logits followed by softmax for common-stream split c_k
+Agent 0 (structured BS controller, default): size = 3K + 2
+    - K+1 bounded logits for common/private stream powers
+    - K bounded logits for the common-rate split c_k
+    - K bounded logits for the common-beam user weights
+    - 1 bounded residual controlling the MRT/RZF private-direction mixture
+  Beam directions are generated from the effective channel after applying the
+  current STAR-RIS action. This keeps the policy close to a strong physical
+  baseline and removes raw complex beamformer entries from the action space.
+  Legacy `raw_complex` mode remains available only for reproducing old results.
 Agent 1 (STAR-RIS reflection):    size = 2N   -- ORDER: [beta_r (N), phi_r (N)]
 Agent 2 (STAR-RIS transmission):  size = N    -- [phi_t (N)]
 Use `action_schema()` / `observation_schema()` for the authoritative layout.
@@ -222,8 +227,56 @@ class StarRisRsmaEnv(gym.Env):
         self.eta_power = float(cfg.get("power_switching_cost", 0.0))
         self.eta_beta = float(cfg.get("beta_switching_cost", 0.0))
 
-        # Ablation: bypass agent's power action.
+        # ----------- Structured BS action -----------
+        # Missing key intentionally defaults to raw_complex so historical
+        # static-block golden fixtures remain reproducible. Publication configs
+        # explicitly select structured_rzf.
+        self.bs_action_mode = str(cfg.get("bs_action_mode", "raw_complex")).lower()
+        if self.bs_action_mode not in ("raw_complex", "structured_rzf"):
+            raise ValueError(
+                "bs_action_mode must be 'raw_complex' or 'structured_rzf', "
+                f"got {self.bs_action_mode!r}")
+        self.bs_power_logit_scale = float(cfg.get("bs_power_logit_scale", 1.5))
+        self.bs_power_action_clip = float(cfg.get("bs_power_action_clip", 0.9))
+        self.bs_min_stream_power_fraction = float(
+            cfg.get("bs_min_stream_power_fraction", 0.02))
+        self.bs_common_beam_logit_scale = float(
+            cfg.get("bs_common_beam_logit_scale", 1.0))
+        self.bs_common_beam_action_clip = float(
+            cfg.get("bs_common_beam_action_clip", 0.9))
+        self.bs_rzf_regularization = float(cfg.get("bs_rzf_regularization", 0.05))
+        self.bs_rzf_mix_prior = float(cfg.get("bs_rzf_mix_prior", 0.85))
+        self.bs_rzf_mix_span = float(cfg.get("bs_rzf_mix_span", 0.15))
+        if not (0.0 < self.bs_power_action_clip < 1.0):
+            raise ValueError("bs_power_action_clip must be in (0, 1)")
+        if not (0.0 <= self.bs_min_stream_power_fraction < 1.0 / (self.K + 1)):
+            raise ValueError(
+                "bs_min_stream_power_fraction must be in [0, 1/(K+1))")
+        if not (0.0 < self.bs_common_beam_action_clip < 1.0):
+            raise ValueError("bs_common_beam_action_clip must be in (0, 1)")
+        if self.bs_rzf_regularization <= 0:
+            raise ValueError("bs_rzf_regularization must be positive")
+        if not (0.0 <= self.bs_rzf_mix_prior <= 1.0):
+            raise ValueError("bs_rzf_mix_prior must be in [0, 1]")
+        if self.bs_rzf_mix_span < 0:
+            raise ValueError("bs_rzf_mix_span must be non-negative")
+
+        # Clean one-factor ablations. The old equal_power_mode is retained as a
+        # deprecated composite compatibility switch (equal powers + MRT +
+        # uniform common split/beam); new studies must use the explicit flags.
+        self.force_equal_stream_power = bool(
+            cfg.get("force_equal_stream_power", False))
+        self.force_mrt_directions = bool(cfg.get("force_mrt_directions", False))
+        self.force_uniform_common_split = bool(
+            cfg.get("force_uniform_common_split", False))
+        self.force_uniform_common_beam = bool(
+            cfg.get("force_uniform_common_beam", False))
         self.equal_power_mode = bool(cfg.get("equal_power_mode", False))
+        if self.equal_power_mode:
+            self.force_equal_stream_power = True
+            self.force_mrt_directions = True
+            self.force_uniform_common_split = True
+            self.force_uniform_common_beam = True
 
         # Physics-informed phase action: "absolute" or "residual".
         self.phase_action_mode = str(cfg.get("phase_action_mode", "absolute")).lower()
@@ -273,8 +326,14 @@ class StarRisRsmaEnv(gym.Env):
 
         # ----------- Spaces -----------
         self.n_agents = 3
+        if self.bs_action_mode == "structured_rzf":
+            # [power logits (K+1), common-split logits (K), common-beam
+            # weights (K), private MRT/RZF mix residual (1)].
+            bs_act_dim = 3 * self.K + 2
+        else:
+            bs_act_dim = 2 * self.M * (self.K + 1) + self.K
         self.act_dims = [
-            2 * self.M * (self.K + 1) + self.K,  # BS: complex common/private beamformers + common split
+            bs_act_dim,
             2 * self.N,              # RIS reflection: [beta_r, phi_r]
             self.N,                  # RIS transmission: [phi_t]
         ]
@@ -487,7 +546,10 @@ class StarRisRsmaEnv(gym.Env):
             for b in beta_grid:
                 b_arr = float(b) * np.ones(N)
                 h = self._effective_channels(b_arr, phi_r, phi_t)
-                rs = self._rsma_rates(h, P_c, P_k, common_split)
+                Wc_t, Wk_t, _ = self._physics_beamformers(
+                    h, P_c, P_k, rzf_mix=self.bs_rzf_mix_prior)
+                rs = self._rsma_rates(
+                    h, P_c, P_k, common_split, Wc_t, Wk_t)
                 n_evals += 1
                 if rs["sum_rate"] > best_sr:
                     best_sr = rs["sum_rate"]; best_beta = float(b)
@@ -498,7 +560,10 @@ class StarRisRsmaEnv(gym.Env):
             for f in pc_grid:
                 Pc_t = float(self.p_max * f)
                 Pk_t = np.full(K, (self.p_max - Pc_t) / max(K, 1), dtype=np.float64)
-                rs = self._rsma_rates(h_eff, Pc_t, Pk_t, common_split)
+                Wc_t, Wk_t, _ = self._physics_beamformers(
+                    h_eff, Pc_t, Pk_t, rzf_mix=self.bs_rzf_mix_prior)
+                rs = self._rsma_rates(
+                    h_eff, Pc_t, Pk_t, common_split, Wc_t, Wk_t)
                 n_evals += 1
                 if rs["sum_rate"] > best_sr:
                     best_sr = rs["sum_rate"]; best_pc = Pc_t
@@ -508,77 +573,224 @@ class StarRisRsmaEnv(gym.Env):
 
         powers = np.concatenate([[P_c], P_k])
         power_weights = powers / max(self.p_max, 1e-12)
+        h_eff = self._effective_channels(beta_r, phi_r, phi_t)
+        W_c, W_k, mix = self._physics_beamformers(
+            h_eff, P_c, P_k, rzf_mix=self.bs_rzf_mix_prior)
         return {
-            "P_c": P_c, "P_k": P_k,
+            "P_c": P_c, "P_k": P_k, "W_c": W_c, "W_k": W_k,
             "power_weights": power_weights, "common_split": common_split,
             "beta_r": beta_r, "phi_r": phi_r, "phi_t": phi_t,
+            "bs_private_rzf_mix": mix,
+            "bs_action_mode": "classical_rzf_grid",
             "ao_grid_n_evals": n_evals,
             "ao_grid_objective_trace": objective_trace,
         }
 
-    # ---------------------------------------------------------- action decoding
-    def _decode_action(self, action_list: list[np.ndarray]):
-        """Map normalized [-1,1] actions -> physical decision variables."""
-        a_bs, a_ris_r, a_ris_t = action_list
+    # ---------------------------------------------------------- structured BS
+    @staticmethod
+    def _normalise_rows(x: np.ndarray, eps: float) -> np.ndarray:
+        x = np.asarray(x, dtype=np.complex128)
+        return x / np.maximum(np.linalg.norm(x, axis=1, keepdims=True), eps)
 
+    def _mrt_directions(self, h_eff: np.ndarray) -> np.ndarray:
+        """Unit-norm matched-filter directions for h_k^H w_k."""
+        return self._normalise_rows(h_eff, self.eps)
+
+    def _rzf_directions(self, h_eff: np.ndarray) -> np.ndarray:
+        """Stable unit-norm RZF directions under the stored-channel convention.
+
+        The received channel matrix is B=conj(H), because the scalar link is
+        h_k^H w. Row-normalising B removes path-loss scale from the condition
+        number; the actor controls only a bounded MRT/RZF mixture, not raw
+        complex coefficients.
+        """
+        h = np.asarray(h_eff, dtype=np.complex128).reshape(self.K, self.M)
+        b = np.conj(self._normalise_rows(h, self.eps))
+        gram = b @ np.conj(b).T
+        reg = self.bs_rzf_regularization * np.eye(self.K, dtype=np.complex128)
+        try:
+            inv = np.linalg.solve(gram + reg, np.eye(self.K, dtype=np.complex128))
+        except np.linalg.LinAlgError:
+            inv = np.linalg.pinv(gram + reg, rcond=1e-10)
+        f = np.conj(b).T @ inv             # (M,K), columns are user beams
+        dirs = self._normalise_rows(f.T, self.eps)
+        # Align global phases with MRT before interpolation; otherwise two
+        # physically equivalent directions can cancel numerically when blended.
+        mrt = self._mrt_directions(h)
+        for k in range(self.K):
+            inner = np.vdot(mrt[k], dirs[k])
+            if abs(inner) > self.eps:
+                dirs[k] *= np.exp(-1j * np.angle(inner))
+        return dirs
+
+    def _physics_beamformers(self, h_eff: np.ndarray, P_c: float,
+                              P_k: np.ndarray,
+                              common_beam_weights: np.ndarray | None = None,
+                              rzf_mix: float | None = None
+                              ) -> tuple[np.ndarray, np.ndarray, float]:
+        """Build common/private beams from a shared MRT/RZF physics layer.
+
+        Learned policies and classical baselines call this same routine so a
+        reported gain cannot come from silently giving one method a stronger
+        beamformer implementation. Only powers, common-beam weights and the
+        bounded MRT/RZF mixing coefficient differ between methods.
+        """
+        h = np.asarray(h_eff, dtype=np.complex128).reshape(self.K, self.M)
+        p_k = np.asarray(P_k, dtype=np.float64).reshape(self.K)
+        if common_beam_weights is None:
+            common_beam_weights = np.ones(self.K, dtype=np.float64) / self.K
+        else:
+            common_beam_weights = np.asarray(
+                common_beam_weights, dtype=np.float64).reshape(self.K)
+            common_beam_weights = np.maximum(common_beam_weights, 0.0)
+            total = float(common_beam_weights.sum())
+            common_beam_weights = (
+                common_beam_weights / total if total > self.eps
+                else np.ones(self.K, dtype=np.float64) / self.K)
+
+        mrt = self._mrt_directions(h)
+        rzf = self._rzf_directions(h)
+        mix = self.bs_rzf_mix_prior if rzf_mix is None else float(rzf_mix)
+        mix = float(np.clip(mix, 0.0, 1.0))
+        private_dirs = self._normalise_rows(
+            (1.0 - mix) * mrt + mix * rzf, self.eps)
+        W_k = np.sqrt(np.maximum(p_k, 0.0))[:, None] * private_dirs
+
+        common_dir = np.sum(common_beam_weights[:, None] * mrt, axis=0)
+        if np.linalg.norm(common_dir) < self.eps:
+            common_dir = np.sum(mrt, axis=0)
+        common_dir = common_dir / max(np.linalg.norm(common_dir), self.eps)
+        W_c = math.sqrt(max(float(P_c), 0.0)) * common_dir
+        return W_c, W_k, mix
+
+    def _structured_bs_decision(self, a_bs: np.ndarray,
+                                h_eff: np.ndarray) -> dict:
+        """Decode a compact, physics-structured BS action.
+
+        Zero action maps to equal stream power, uniform common split/beam
+        weights, and the configured RZF-prior mixture. This gives every RL
+        method a strong, reproducible starting point instead of an arbitrary
+        raw complex beamformer.
+        """
+        a = np.clip(np.asarray(a_bs, dtype=np.float64), -1.0, 1.0)
+        pos = 0
+        p_raw = a[pos:pos + self.K + 1]; pos += self.K + 1
+        c_raw = a[pos:pos + self.K]; pos += self.K
+        cb_raw = a[pos:pos + self.K]; pos += self.K
+        mix_raw = float(a[pos]); pos += 1
+        assert pos == a.size == 3 * self.K + 2
+
+        p_logits = self.bs_power_logit_scale * np.arctanh(
+            np.clip(p_raw, -self.bs_power_action_clip,
+                    self.bs_power_action_clip))
+        soft_power = _softmax(p_logits)
+        floor = self.bs_min_stream_power_fraction
+        power_weights = floor + (1.0 - (self.K + 1) * floor) * soft_power
+        if self.force_equal_stream_power:
+            power_weights = np.ones(self.K + 1, dtype=np.float64) / (self.K + 1)
+        powers = self.p_max * power_weights
+        P_c = float(powers[0])
+        P_k = powers[1:].astype(np.float64)
+
+        c_logits = self.common_split_logit_scale * np.arctanh(
+            np.clip(c_raw, -1.0 + 1e-6, 1.0 - 1e-6))
+        common_split = _softmax(c_logits)
+        if self.force_uniform_common_split:
+            common_split = np.ones(self.K, dtype=np.float64) / self.K
+
+        cb_logits = self.bs_common_beam_logit_scale * np.arctanh(
+            np.clip(cb_raw, -self.bs_common_beam_action_clip,
+                    self.bs_common_beam_action_clip))
+        common_beam_weights = _softmax(cb_logits)
+        if self.force_uniform_common_beam:
+            common_beam_weights = np.ones(self.K, dtype=np.float64) / self.K
+
+        mix = float(np.clip(self.bs_rzf_mix_prior
+                            + self.bs_rzf_mix_span * mix_raw, 0.0, 1.0))
+        if self.force_mrt_directions:
+            mix = 0.0
+        W_c, W_k, mix = self._physics_beamformers(
+            h_eff, P_c, P_k, common_beam_weights, rzf_mix=mix)
+
+        return {
+            "P_c": P_c, "P_k": P_k, "W_c": W_c, "W_k": W_k,
+            "power_weights": power_weights,
+            "common_split": common_split,
+            "common_beam_weights": common_beam_weights,
+            "bs_private_rzf_mix": mix,
+            "bs_action_mode": "structured_rzf",
+        }
+
+    def _raw_complex_bs_decision(self, a_bs: np.ndarray,
+                                 h_eff: np.ndarray) -> dict:
+        """Legacy raw complex beamformer decoder for old-result reproduction."""
         a_bs = np.clip(a_bs, -1.0, 1.0)
         n_streams = self.K + 1
         n_bf = 2 * self.M * n_streams
         bf_raw = a_bs[:n_bf].reshape(n_streams, 2, self.M)
-        W = bf_raw[:, 0, :].astype(np.float64) + 1j * bf_raw[:, 1, :].astype(np.float64)
-        # Project the joint complex beamformer matrix onto the BS power ball.
-        # A tiny floor avoids a zero-action singularity while preserving direction.
+        W = (bf_raw[:, 0, :].astype(np.float64)
+             + 1j * bf_raw[:, 1, :].astype(np.float64))
         norm2 = float(np.sum(np.abs(W) ** 2))
         if norm2 < self.eps:
             W = np.ones((n_streams, self.M), dtype=np.complex128)
             norm2 = float(np.sum(np.abs(W) ** 2))
         W *= math.sqrt(self.p_max / max(norm2, self.eps))
-        W_c = W[0]
-        W_k = W[1:]
+        W_c, W_k = W[0], W[1:]
         powers = np.sum(np.abs(W) ** 2, axis=1).astype(np.float64)
         power_weights = powers / max(self.p_max, self.eps)
-        P_c = float(powers[0])
-        P_k = powers[1:]
-        cs_logits = a_bs[n_bf:]
+        P_c, P_k = float(powers[0]), powers[1:]
         cs_logits = self.common_split_logit_scale * np.arctanh(
-            np.clip(cs_logits, -1.0 + 1e-6, 1.0 - 1e-6)
-        )
+            np.clip(a_bs[n_bf:], -1.0 + 1e-6, 1.0 - 1e-6))
         common_split = _softmax(cs_logits)
 
-        # ORDER: [beta_r (N), phi_r (N)] -- see action_schema().
-        a_ris_r = np.clip(a_ris_r, -1.0, 1.0)
-        beta_logits = a_ris_r[: self.N]
-        phi_r_raw = a_ris_r[self.N:]
-        beta_r = 0.5 * (beta_logits + 1.0)
-        beta_r = np.clip(beta_r, 1e-4, 1.0 - 1e-4)
-
-        a_ris_t = np.clip(a_ris_t, -1.0, 1.0)
-
-        if self.phase_action_mode == "residual" and self.phase_residual_scale > 0:
-            prior_phi_r, prior_phi_t = self._analytical_phases()
-            phi_r = prior_phi_r + self.phase_residual_scale * math.pi * phi_r_raw
-            phi_t = prior_phi_t + self.phase_residual_scale * math.pi * a_ris_t
-            phi_r = np.mod(phi_r, 2 * math.pi)
-            phi_t = np.mod(phi_t, 2 * math.pi)
-        else:
-            phi_r = math.pi * (phi_r_raw + 1.0)
-            phi_t = math.pi * (a_ris_t + 1.0)
-
+        # Deprecated composite compatibility mode.
         if self.equal_power_mode:
             power_weights = np.ones(self.K + 1, dtype=np.float64) / (self.K + 1)
             common_split = np.ones(self.K, dtype=np.float64) / self.K
             P_c = float(self.p_max / (self.K + 1))
             P_k = np.full(self.K, self.p_max / (self.K + 1), dtype=np.float64)
-            # Equal-power matched-filter directions under the current effective channel.
-            H = self._h_eff if self._h_eff is not None else self._h_d
-            dirs = H / np.maximum(np.linalg.norm(H, axis=1, keepdims=True), self.eps)
+            dirs = self._mrt_directions(h_eff)
             W_k = np.sqrt(P_k)[:, None] * dirs
             common_dir = np.sum(dirs, axis=0)
             common_dir /= max(np.linalg.norm(common_dir), self.eps)
             W_c = math.sqrt(P_c) * common_dir
+        return {
+            "P_c": P_c, "P_k": P_k, "W_c": W_c, "W_k": W_k,
+            "power_weights": power_weights, "common_split": common_split,
+            "bs_private_rzf_mix": float("nan"),
+            "bs_action_mode": "raw_complex",
+        }
+
+    # ---------------------------------------------------------- action decoding
+    def _decode_action(self, action_list: list[np.ndarray]):
+        """Map normalized [-1,1] actions -> physical decision variables.
+
+        RIS variables are decoded first. The structured BS backbone then uses
+        the effective channel induced by the *current* RIS action, removing the
+        one-step stale-channel mismatch present in the old equal-power path.
+        """
+        a_bs, a_ris_r, a_ris_t = action_list
+
+        # ORDER: [beta_r (N), phi_r (N)] -- see action_schema().
+        a_ris_r = np.clip(a_ris_r, -1.0, 1.0)
+        beta_logits = a_ris_r[: self.N]
+        phi_r_raw = a_ris_r[self.N:]
+        beta_r = np.clip(0.5 * (beta_logits + 1.0), 1e-4, 1.0 - 1e-4)
+        a_ris_t = np.clip(a_ris_t, -1.0, 1.0)
+
+        if self.phase_action_mode == "residual" and self.phase_residual_scale > 0:
+            prior_phi_r, prior_phi_t = self._analytical_phases()
+            phi_r = np.mod(prior_phi_r
+                           + self.phase_residual_scale * math.pi * phi_r_raw,
+                           2 * math.pi)
+            phi_t = np.mod(prior_phi_t
+                           + self.phase_residual_scale * math.pi * a_ris_t,
+                           2 * math.pi)
+        else:
+            phi_r = math.pi * (phi_r_raw + 1.0)
+            phi_t = math.pi * (a_ris_t + 1.0)
 
         if self.ris_mode == "ao_grid":
-            # Coarse AO-grid heuristic overrides the agent's action entirely.
             return self._coarse_ao_grid()
         if self.ris_mode == "fixed":
             beta_r = 0.5 * np.ones(self.N)
@@ -593,15 +805,15 @@ class StarRisRsmaEnv(gym.Env):
             phi_r = np.zeros(self.N)
             phi_t = np.zeros(self.N)
         elif self.ris_mode == "analytical":
-            # Closed-form single-user alignment heuristic (not an upper bound).
             beta_r = 0.5 * np.ones(self.N)
             phi_r, phi_t = self._analytical_phases()
 
-        return {
-            "P_c": P_c, "P_k": P_k, "W_c": W_c, "W_k": W_k,
-            "power_weights": power_weights, "common_split": common_split,
-            "beta_r": beta_r, "phi_r": phi_r, "phi_t": phi_t,
-        }
+        h_candidate = self._effective_channels(beta_r, phi_r, phi_t)
+        if self.bs_action_mode == "structured_rzf":
+            bs = self._structured_bs_decision(a_bs, h_candidate)
+        else:
+            bs = self._raw_complex_bs_decision(a_bs, h_candidate)
+        return {**bs, "beta_r": beta_r, "phi_r": phi_r, "phi_t": phi_t}
 
     # ---------------------------------------------------------- RSMA
     def _effective_channels(self, beta_r: np.ndarray, phi_r: np.ndarray, phi_t: np.ndarray) -> np.ndarray:
@@ -771,11 +983,26 @@ class StarRisRsmaEnv(gym.Env):
         self._single_schema = build(base + (chan_all if self.obs_include_channel else [])
                                     + rs_all)
 
+        if self.bs_action_mode == "structured_rzf":
+            bs_schema = build([
+                ("stream_power_logits", K + 1,
+                 "bounded logits -> softmax common/private stream powers"),
+                ("common_split_logits", K,
+                 "inverse-tanh logits -> common-rate split c_k"),
+                ("common_beam_weight_logits", K,
+                 "user weights for the multicast common-beam direction"),
+                ("private_rzf_mix_residual", 1,
+                 "bounded residual around configured MRT/RZF mixture prior"),
+            ])
+        else:
+            bs_schema = build([
+                ("beamformers_complex", 2 * M * (K + 1),
+                 "legacy Re/Im common/private beamformers, jointly normalized"),
+                ("common_split_logits", K,
+                 "inverse-tanh logits -> common-rate split c_k"),
+            ])
         self._act_schema = [
-            build([
-                ("beamformers_complex", 2 * M * (K + 1), "Re/Im of common and K private MISO beamformers, jointly power-normalized"),
-                ("common_split_logits", K, "inverse-tanh logits followed by softmax for common-rate split c_k"),
-            ]),
+            bs_schema,
             build([
                 ("beta_r", N, "beta_r = (a+1)/2 clipped to [1e-4, 1-1e-4]; beta_t = 1 - beta_r"),
                 ("phi_r", N, "reflection phases: absolute pi*(a+1) or residual prior + scale*pi*a"),
@@ -1052,6 +1279,8 @@ class StarRisRsmaEnv(gym.Env):
             "phase_var_T": float(np.var(self._phi_t)) if self._phi_t.size > 0 else 0.0,
             "beta_r_mean": float(np.mean(self._beta_r)),
             "common_power_frac": float(decoded["power_weights"][0]),
+            "bs_action_mode": decoded.get("bs_action_mode", self.bs_action_mode),
+            "bs_private_rzf_mix": float(decoded.get("bs_private_rzf_mix", np.nan)),
         }
         if "ao_grid_n_evals" in decoded:
             info["ao_grid_n_evals"] = decoded["ao_grid_n_evals"]

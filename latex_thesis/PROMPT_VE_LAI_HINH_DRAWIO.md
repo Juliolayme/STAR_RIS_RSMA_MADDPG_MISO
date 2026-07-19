@@ -23,7 +23,7 @@
    - Residual pha: **θ = θ_prior + (π/4)·Δφ** (±45°) — KHÔNG phải π/2
    - Kênh ĐỘNG Gauss–Markov: h_{t+1} = 0,95·h_t + sqrt(1−0,95²)·ε (mỗi step một khối coherence)
    - Reward: α·R_sum/R_ref − Σλ_k·c_k − (w/2)·Σmax(c_k,0)² − switching costs (KHÔNG còn b_sat, b_power)
-   - Seeds: 8 training; validation [11..55]; legacy [9101..9505]; locked final test [70001..70005]. Source: config/seed_split.v1.yaml, SHA-256 d73ba5aea6d037570f2634cbc87175db259a6e91f0fecee74519eecd1f118854
+   - Seeds: 8 training; validation [11..55]; legacy [9101..9505]; locked final test [70001..70005]. Source: config/seed_split.v2.yaml, SHA-256 dc327042efcad7007efa0006f0b10461eb69055992a3cdcd6416612d15db13e8
    - Kích thước MDP MỚI: local obs 73+577+401; canonical state **681**; action 44+64+32=**140**; critic input **821**
 
 ---

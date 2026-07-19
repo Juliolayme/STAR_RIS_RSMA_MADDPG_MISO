@@ -5,6 +5,7 @@
 
 seed: 2026
 device: "auto"   # "cpu" | "cuda" | "auto"
+method_version: "structured_bs_v2"
 
 # ------------------ System / Environment ------------------
 env:
@@ -93,14 +94,33 @@ env:
   power_switching_cost: 0.05
   beta_switching_cost: 0.05
 
-  # Ablation toggle: when true the env overrides BS power action to uniform.
+  # Structured BS controller (publication default). The actor no longer
+  # outputs raw complex beamformers. RZF/MRT directions are built from the
+  # effective channel after the current RIS action; the actor learns only
+  # stream powers, common split/beam weights and a small MRT/RZF residual.
+  bs_action_mode: "structured_rzf"
+  bs_power_logit_scale: 1.5
+  bs_power_action_clip: 0.9
+  bs_min_stream_power_fraction: 0.02
+  bs_common_beam_logit_scale: 1.0
+  bs_common_beam_action_clip: 0.9
+  bs_rzf_regularization: 0.05
+  bs_rzf_mix_prior: 0.95
+  bs_rzf_mix_span: 0.05
+
+  # Clean one-factor ablation switches. Keep all false for training.
+  force_equal_stream_power: false
+  force_mrt_directions: false
+  force_uniform_common_split: false
+  force_uniform_common_beam: false
+  # Deprecated composite legacy switch; do not use in new experiments.
   equal_power_mode: false
 
   # Physics-informed phase action mapping (hybrid analytical-RL).
   # "absolute":  phi_n = pi*(action+1)                          in [0, 2pi]
   # "residual":  phi_n = analytical_prior + scale*pi*action
-  phase_action_mode: "absolute"
-  phase_residual_scale: 0.25
+  phase_action_mode: "residual"
+  phase_residual_scale: 0.15
   # Common-rate split mapping: actor outputs in [-1, 1] are converted with
   # atanh(action) before softmax, so policies can approach simplex boundaries
   # when one user needs nearly all common rate.
@@ -219,8 +239,8 @@ evaluation:
   # load_config verifies this exact SHA-256 and injects the four lists.  Do not
   # duplicate or edit seed lists here.
   seed_split:
-    path: "seed_split.v1.yaml"
-    sha256: "d73ba5aea6d037570f2634cbc87175db259a6e91f0fecee74519eecd1f118854"
+    path: "seed_split.v2.yaml"
+    sha256: "dc327042efcad7007efa0006f0b10461eb69055992a3cdcd6416612d15db13e8"
   # Pre-registered without final-test data.  Both AO-Grid and Hybrid AO use
   # this identical vector; neither may read lambda from a trained DRL run.
   ao_reference_lambda: [1.0, 1.0, 1.0, 1.0]
@@ -228,7 +248,9 @@ evaluation:
   n_sweep: [16, 32, 64, 96, 128]   # retrain-per-N scalability study
   k_sweep: [2, 4, 6, 8]
   ablation_modes: ["learned", "ao_grid", "analytical", "fixed", "random",
-                   "none", "equal_power_learned", "equal_power_fixed"]
+                   "none", "equal_power_only", "mrt_directions_only",
+                   "uniform_common_split_only", "uniform_common_beam_only",
+                   "classical_mrt_equal_power_fixed"]
   # Hybrid AO Local Search reference (SLSQP + projected gradient): run for
   # N <= 32 only (finite-difference gradients scale with N).
   ao_local_search_max_n: 32

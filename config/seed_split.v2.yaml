@@ -1,0 +1,16 @@
+# Versioned, pre-registered ScenarioBank seed split for Structured-BS V2.
+#
+# The v1 locked-test bank was opened while diagnosing the raw-complex
+# beamformer. It remains in seed_split.v1.yaml for historical reproducibility
+# and must not be reused as confirmatory evidence after the method change.
+# Validation seeds remain development-only; the fresh v2 test seeds below must
+# not be evaluated until code/config/training protocol are frozen.
+schema_version: 2
+split_id: star_ris_rsma_structured_bs_2026-07-19_v2
+selection_policy: preregistered_after_structured_bs_method_revision_before_v2_test_evaluation
+splits:
+  dev_seeds: [101, 202, 303]
+  validation_seeds: [11, 22, 33, 44, 55]
+  legacy_eval_seeds: [9101, 9202, 9303, 9404, 9505]
+  test_seeds: [81011, 81023, 81041, 81071, 81101]
+historical_opened_test_seeds: [70001, 70002, 70003, 70004, 70005]

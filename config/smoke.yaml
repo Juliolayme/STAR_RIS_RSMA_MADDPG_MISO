@@ -8,6 +8,7 @@
 
 seed: 2026
 device: "cpu"
+method_version: "structured_bs_v2"
 
 env:
   num_bs_antennas: 4
@@ -61,9 +62,24 @@ env:
   power_switching_cost: 0.05
   beta_switching_cost: 0.05
 
+  # Structured BS controller: compact power/split/beam weights around
+  # an RZF/MRT physical backbone. Old raw-complex checkpoints are incompatible.
+  bs_action_mode: "structured_rzf"
+  bs_power_logit_scale: 1.5
+  bs_power_action_clip: 0.9
+  bs_min_stream_power_fraction: 0.02
+  bs_common_beam_logit_scale: 1.0
+  bs_common_beam_action_clip: 0.9
+  bs_rzf_regularization: 0.05
+  bs_rzf_mix_prior: 0.95
+  bs_rzf_mix_span: 0.05
+  force_equal_stream_power: false
+  force_mrt_directions: false
+  force_uniform_common_split: false
+  force_uniform_common_beam: false
   equal_power_mode: false
-  phase_action_mode: "absolute"
-  phase_residual_scale: 0.25
+  phase_action_mode: "residual"
+  phase_residual_scale: 0.15
   common_split_logit_scale: 1.0
   analytical_phase_min_direct: 1.0e-9
 
@@ -162,7 +178,9 @@ evaluation:
   n_sweep: [8]
   k_sweep: [4]
   ablation_modes: ["learned", "ao_grid", "analytical", "fixed", "random",
-                   "none", "equal_power_learned", "equal_power_fixed"]
+                   "none", "equal_power_only", "mrt_directions_only",
+                   "uniform_common_split_only", "uniform_common_beam_only",
+                   "classical_mrt_equal_power_fixed"]
   # AO local search disabled for the smoke run (0 = skip). The finite-difference
   # projected-gradient block is slow; a dedicated tiny AO test covers it
   # (tests/test_ao_local_search.py, tests/test_ao_smoke.py).

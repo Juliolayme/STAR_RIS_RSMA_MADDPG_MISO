@@ -80,9 +80,10 @@ def test_common_split_can_approach_simplex_boundary():
     env = StarRisRsmaEnv(_cfg(), seed=11)
     env.reset(seed=12)
     actions = [np.zeros(d, dtype=np.float32) for d in env.act_dims]
-    n_bf = 2 * env.M * (env.K + 1)
-    actions[0][n_bf:] = -1.0
-    actions[0][n_bf] = 1.0
+    field = next(f for f in env.action_schema()["agents"][0]
+                 if f["name"] == "common_split_logits")
+    actions[0][field["start"]:field["stop"]] = -1.0
+    actions[0][field["start"]] = 1.0
     split = env._decode_action(actions)["common_split"]
     assert split[0] > 0.999
     assert split[1:].sum() < 0.001

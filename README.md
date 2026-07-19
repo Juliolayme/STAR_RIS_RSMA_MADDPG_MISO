@@ -1,8 +1,9 @@
 # STAR-RIS RSMA MADDPG - MISO hardening branch
 
 Mã nguồn nghiên cứu tối ưu phân bổ tài nguyên cho mạng STAR-RIS hỗ trợ RSMA
-bằng DRL. Bản hiện tại dùng BS nhiều anten (`M=4` mặc định), beamforming phức
-cho common/private streams, và SINR MISO đầy đủ.
+bằng DRL. Bản Structured-BS V2 dùng BS nhiều anten (`M=4` mặc định), MISO
+RSMA đầy đủ và một lớp giải mã vật lý RZF/MRT thay cho việc học trực tiếp mọi
+hệ số beamforming phức.
 
 ## Trạng thái kết quả
 
@@ -33,13 +34,16 @@ Kết luận hiện tại nên viết thận trọng:
 - Analytical phase prior is derived directly from `h_d^H q + g^H Phi G q` and covered by a nonzero-direct-link oracle.
 - MADDPG critics use one canonical global state; overlapping local observations are not concatenated.
 - PPO uses distinct terminal/bootstrap and episode-boundary masks in GAE.
-- Primary paper config uses `phase_action_mode: absolute`; residual phase is an optional ablation until separately validated.
+- Primary V2 config uses `bs_action_mode: structured_rzf` and a bounded residual around the corrected analytical RIS phase prior.
+- The BS actor learns stream powers, common-rate split, common-beam weights and a low-dimensional MRT/RZF residual; it no longer emits raw complex beamformers.
 
-## MISO/Q1 compatibility note
+## Structured-BS V2 compatibility note
 
-The canonical MADDPG critic state and replay schema changed in this hardening pass.
-Old MADDPG checkpoints are not compatible and must not be mixed with new shards.
-See [`MISO_Q1_FIXES.md`](MISO_Q1_FIXES.md) for the fixes and validation gates.
+BS action dimension changed from 44 to 14 (default M=4, K=4), and the flat
+action dimension changed from 140 to 110. **All old checkpoints, replay files,
+40 training shards and the opened v1 final-test package are incompatible with
+V2.** Retrain every algorithm/seed and use `config/seed_split.v2.yaml`. See
+[`STRUCTURED_BS_V2.md`](STRUCTURED_BS_V2.md).
 
 ## Chạy nhanh
 
@@ -53,13 +57,13 @@ python3 main.py --config config/smoke.yaml --quick
 Mỗi job nên chạy một cặp algorithm-seed:
 
 ```bash
-python3 main.py --config config/config.yaml --train-only --algos td3_matched --seeds 1000 --run-id miso_q1
+python3 main.py --config config/config.yaml --train-only --algos td3_matched --seeds 1000 --run-id miso_q1_structured_bs_v2
 ```
 
 Sau khi đủ shard, gộp bằng:
 
 ```bash
-python3 main.py --aggregate-only --load-shards results_revised/shards/miso_q1
+python3 main.py --aggregate-only --load-shards results_revised/shards/miso_q1_structured_bs_v2
 ```
 
 Không commit hoặc in nội dung `kaggle.json`; đó là credential nhạy cảm.

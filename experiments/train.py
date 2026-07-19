@@ -95,9 +95,15 @@ def validate_formulation_config(cfg: dict) -> None:
 
 def _make_env(cfg: dict, seed: int, ris_mode: str = "optimized",
               equal_power: bool = False, qos_lambda_override: float | None = None,
-              qos_lambda_vec_override=None) -> StarRisRsmaEnv:
+              qos_lambda_vec_override=None,
+              env_overrides: dict | None = None) -> StarRisRsmaEnv:
     env_cfg = dict(cfg["env"])
-    env_cfg["equal_power_mode"] = bool(equal_power)
+    if env_overrides:
+        env_cfg.update(env_overrides)
+    # Legacy compatibility: the old boolean was a composite MRT/equal-power
+    # baseline. New ablations pass explicit one-factor overrides instead.
+    if equal_power:
+        env_cfg["equal_power_mode"] = True
     env = StarRisRsmaEnv(env_cfg, seed=seed, ris_mode=ris_mode)
     # Per-user vector takes precedence over the scalar (item 9 reviewer fix):
     # the trained multipliers are heterogeneous across users and must NOT be
@@ -871,7 +877,8 @@ def evaluate_agent(env_cfg: dict, agent, kind: str,
                    qos_lambda: float | None = None,
                    qos_lambda_vec=None,
                    scenarios: list[dict] | None = None,
-                   obs_norm=None) -> dict:
+                   obs_norm=None,
+                   env_overrides: dict | None = None) -> dict:
     """Deterministic-policy evaluation with rich per-step diagnostics.
 
     Agents normalize observations internally (they own the frozen normalizer),
@@ -888,7 +895,8 @@ def evaluate_agent(env_cfg: dict, agent, kind: str,
     """
     env = _make_env(env_cfg, seed, ris_mode=ris_mode, equal_power=equal_power,
                     qos_lambda_override=qos_lambda,
-                    qos_lambda_vec_override=qos_lambda_vec)
+                    qos_lambda_vec_override=qos_lambda_vec,
+                    env_overrides=env_overrides)
     n_episodes = len(scenarios) if scenarios is not None else episodes
     rets, srs = [], []
     uqf, all_ok, min_rates, mean_defs = [], [], [], []

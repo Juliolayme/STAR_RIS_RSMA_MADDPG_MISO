@@ -65,3 +65,8 @@ Passing these gates means the source is suitable for experiment freeze. It does
 not create final Q1 evidence. Chapter 4 tables, figures, latency, scalability,
 and statistical claims still require a fresh complete MISO rerun on the locked
 seed split and ScenarioBank.
+
+
+## Superseded by Structured-BS V2
+
+The 129-test/raw-complex experiment freeze documented above is retained for audit only. Structured-BS V2 changes the BS action parameterization and primary RIS action, uses a fresh locked-test split, and requires full retraining. See `STRUCTURED_BS_V2.md`.

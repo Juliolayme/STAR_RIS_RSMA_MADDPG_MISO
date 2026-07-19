@@ -1,0 +1,59 @@
+{
+  "package": "STAR_RIS_RSMA_MADDPG_MISO_STRUCTURED_BS_V2",
+  "method_version": "structured_bs_v2",
+  "source_tree_sha256": "a363f99a6300cc698dcb581f17fb3479b408e3b454043913e261e5e5de0442e2",
+  "effective_config_sha256": "7e9ef64bcb2f19d324c70a9d69492fb1c3e7b034cf8b28023f7e421f127936b3",
+  "seed_split_sha256": "dc327042efcad7007efa0006f0b10461eb69055992a3cdcd6416612d15db13e8",
+  "seed_split_file": "config/seed_split.v2.yaml",
+  "fresh_locked_test_seeds": [
+    81011,
+    81023,
+    81041,
+    81071,
+    81101
+  ],
+  "historical_opened_v1_test_seeds": [
+    70001,
+    70002,
+    70003,
+    70004,
+    70005
+  ],
+  "tests": {
+    "passed": 134,
+    "warnings": 22,
+    "command": "python -m pytest -q"
+  },
+  "smoke_algorithms": [
+    "maddpg",
+    "ddpg",
+    "td3",
+    "td3_matched",
+    "ppo"
+  ],
+  "default_dimensions": {
+    "local_observations": [
+      73,
+      577,
+      401
+    ],
+    "actions": [
+      14,
+      64,
+      32
+    ],
+    "flat_action": 110,
+    "global_state": 681
+  },
+  "compatibility": {
+    "old_checkpoints_compatible": false,
+    "old_shards_compatible": false,
+    "reason": "BS action 44->14 and flat action 140->110; method/test protocol changed."
+  },
+  "validation_only_sanity": {
+    "structured_rzf_analytical_sum_rate": 14.06283,
+    "classical_mrt_equal_fixed_sum_rate": 4.783099,
+    "legacy_raw_zero_sum_rate": 1.563644,
+    "note": "Development validation bank only; not a final paper result."
+  }
+}
